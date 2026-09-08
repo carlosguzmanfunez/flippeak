@@ -18,4 +18,13 @@ declare module '@paypal/checkout-server-sdk' {
       requestBody(body: Record<string, unknown>): void;
     };
   };
+  export const orders: {
+    OrdersCreateRequest: new () => {
+      prefer(value: string): void;
+      requestBody(body: Record<string, unknown>): void;
+    };
+    OrdersCaptureRequest: new (orderId: string) => {
+      requestBody(body?: Record<string, unknown>): void;
+    };
+  };
 }
