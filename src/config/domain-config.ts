@@ -14,17 +14,6 @@ export const MINOR_UNITS_PER_MAJOR_UNIT = 100;
 export const MILLISECONDS_PER_HOUR = 3_600_000;
 
 /**
- * Cent-milliseconds per credited cent (ADR-011).
- *
- * Consumption is measured in cent-ms: one cent of funding holds exactly
- * `MILLISECONDS_PER_HOUR` (3,600,000) cent-ms of time-budget capacity, because
- * a run consuming `R` cents/hour burns `R` cent-ms per millisecond. Both the
- * DB CHECK `consumed_cent_ms <= credited_cents * 3600000` and the economic
- * engine read this single constant so the unit can never drift.
- */
-export const CENT_MS_PER_CENT = MILLISECONDS_PER_HOUR;
-
-/**
  * Approved Time Rate limits (master prompt section 5).
  *
  * The standard control covers $1–$100/hour in $1 steps. High Rate covers

@@ -202,3 +202,37 @@ remaining is never negative. The exhaustion instant is computable in closed form
 from the anchor, the rate and the remaining balance, which is what lets a job
 schedule the materialisation instead of polling. Cron may reconcile, materialise
 and notify; it is never the source of economic truth.
+
+## ADR-013 — One engine, and the two roundings point in opposite directions
+
+**Decision.** `src/modules/economics/run-accounting.ts` is the single consumption
+engine. Any parallel implementation is retired rather than merged. Conformance
+is decided by `conformance-suite.ts`, which checks an implementation against an
+independent BigInt restatement of ADR-011 rather than against another engine.
+
+Two roundings exist and they are not the same rounding:
+
+| Quantity | Rounding | Why |
+|---|---|---|
+| elapsed milliseconds | **floor** | A millisecond half-elapsed has not been consumed |
+| `deficit / rate` for the exhaustion instant | **ceil** | The balance reaches zero *inside* that millisecond, not at the end of the previous one |
+
+**Why this needed recording.** An earlier review corrected the exhaustion instant
+from floor to ceil. Read without the qualifier, that reads as "this model rounds
+up", and the correction was generalised to elapsed time. A ceiling on elapsed
+charges for time that has not passed and pushes the anchor past the instant
+settled to, which makes the next settlement observe negative elapsed time — a
+clock inversion the system inflicts on itself.
+
+**Why two engines could not be reconciled.** Agreement between two
+implementations proves consistency, not correctness. A ceiling engine and its
+own SQL mirror agree perfectly with each other and are both wrong. The
+conformance suite exists because only an independent statement of the
+specification can tell those apart, and it demonstrably discriminates: with
+whole-millisecond inputs a ceiling engine passes every arithmetic check and
+fails only at the boundary where a fractional duration is reduced.
+
+**Consequences.** The engine accepts whole milliseconds and refuses anything
+else, so the reduction is the caller's responsibility and must be identical in
+the SQL that computes eligibility. Both sides implement the same floor, and both
+are checked by the same suite.
