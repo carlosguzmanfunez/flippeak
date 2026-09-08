@@ -15,7 +15,8 @@ export default tseslint.config(
       // Historical Phase 3F standalone verification scripts (standalone Node
       // utilities, not application code; Node globals are out of scope here).
       '3f4-*.mjs',
-      'paypal-e2e.mjs',\n      'ui-e2e.mjs',
+      'paypal-e2e.mjs',
+      'ui-e2e.mjs',
     ],
   },
   js.configs.recommended,
