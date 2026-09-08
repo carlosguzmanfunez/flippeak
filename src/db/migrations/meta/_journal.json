@@ -1,41 +1,48 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1788575319953,
-      "tag": "0000_auth_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1788717692679,
-      "tag": "0001_campaign_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1788752049090,
-      "tag": "0002_campaign_text_limits",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1788768870391,
-      "tag": "0003_campaign_run_time_rate_step",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1788799275781,
-      "tag": "0004_run_accounting_state",
-      "breakpoints": true
-    }
-  ]
+    "version":  "7",
+    "dialect":  "postgresql",
+    "entries":  [
+                    {
+                        "idx":  0,
+                        "version":  "7",
+                        "when":  1788575319953,
+                        "tag":  "0000_auth_foundation",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  1,
+                        "version":  "7",
+                        "when":  1788717692679,
+                        "tag":  "0001_campaign_foundation",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  2,
+                        "version":  "7",
+                        "when":  1788752049090,
+                        "tag":  "0002_campaign_text_limits",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  3,
+                        "version":  "7",
+                        "when":  1788768870391,
+                        "tag":  "0003_campaign_run_time_rate_step",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  4,
+                        "version":  "7",
+                        "when":  1788799275781,
+                        "tag":  "0004_run_accounting_state",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  5,
+                        "version":  "7",
+                        "when":  1788849024602,
+                        "tag":  "0005_run_funding_ledger",
+                        "breakpoints":  true
+                    }
+                ]
 }
