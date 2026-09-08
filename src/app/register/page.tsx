@@ -4,14 +4,15 @@ import { RegisterForm } from '@/ui/auth/register-form';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'Create account — FlipPeak',
+  title: 'Create account â€” FlipPeak',
   alternates: { canonical: '/register' },
 };
 
 export default function RegisterPage() {
   return (
     <>
-      <SiteHeader />
+      <link rel="canonical" href="https://flippeak.vercel.app/register" />
+<SiteHeader />
       <main>
         <RegisterForm />
       </main>

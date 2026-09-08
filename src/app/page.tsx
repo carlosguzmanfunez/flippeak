@@ -53,6 +53,7 @@ export default async function LiveMarketPage({
 
   return (
     <>
+      <link rel="canonical" href="https://flippeak.vercel.app/" />
       <SiteHeader />
       <main>
         <section className="mx-auto max-w-5xl px-5 pb-2 pt-16 sm:px-8 sm:pt-20">

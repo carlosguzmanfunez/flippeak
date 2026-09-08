@@ -17,6 +17,7 @@ export default async function LoginPage({
 
   return (
     <>
+      <link rel="canonical" href="https://flippeak.vercel.app/login" />
       <SiteHeader />
       <main>
         <LoginForm justRegistered={registered === '1'} />
