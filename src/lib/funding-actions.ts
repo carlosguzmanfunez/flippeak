@@ -74,7 +74,8 @@ const persistFunding: FundingDependencies['persistFunding'] = async ({ runId, ce
       provider,
       providerEventId,
       verified: true,
-      verifiedAt: new Date(),
+      // The financial record keeps PostgreSQL time, like every other stamp.
+      verifiedAt: sql`now()`,
     });
     await tx
       .update(campaignRun)
