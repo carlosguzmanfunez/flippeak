@@ -9,14 +9,19 @@ import { activateRun, fundRun } from '@/modules/payments/funding';
 import type { FundingDependencies } from '@/modules/payments/funding';
 import { createRunAgain } from '@/modules/campaigns/create-campaign-run';
 import type { AuthenticatedPrincipal } from '@/modules/auth/principal';
-import type { FundingDepsBundle } from '@/lib/funding-dependencies';
 
 /**
  * The funding dependency bundle pulls in auth (betterAuth construction touches
  * db()); loaded lazily so the offline suite never requires DATABASE_URL.
  */
-let fundingDepsModule: FundingDepsBundle | undefined;
-const getFundingDeps = async (): Promise<FundingDepsBundle> => {
+type FundingDepsModule = {
+  readonly loadOwnedRunForFunding: FundingDependencies['loadOwnedRun'];
+  readonly persistFunding: FundingDependencies['persistFunding'];
+  readonly activate: FundingDependencies['activate'];
+  readonly readNowMsForFunding: FundingDependencies['readNowMs'];
+};
+let fundingDepsModule: FundingDepsModule | undefined;
+const getFundingDeps = async (): Promise<FundingDepsModule> => {
   if (fundingDepsModule === undefined) {
     fundingDepsModule = await import('@/lib/funding-dependencies');
   }
