@@ -3,7 +3,7 @@ import { and, eq, ne, sql } from 'drizzle-orm';
 import { campaignRun, paymentEvent, paymentOrder, runFunding } from '@/db/schema';
 import { db } from '@/db/client';
 import { ECONOMIC_NOW_MS } from '@/db/economic-state';
-import { parseProviderEvent } from '@/modules/payments/paypal/order-state';
+import type { ParsedEvent } from '@/modules/payments/paypal/order-state';
 import type { WebhookFlowDeps, WebhookInput } from './paypal-process';
 
 /**
@@ -39,10 +39,7 @@ export const paypalWebhookDeps: WebhookFlowDeps = {
     }
   },
 
-  async loadOrder(input: WebhookInput) {
-    const parsed = parseProviderEvent(input.eventType, input.resource);
-    if (parsed === 'UNKNOWN_EVENT' || parsed === 'MISSING_EVENT_ID') return null;
-
+  async loadOrder(parsed: ParsedEvent) {
     let predicate;
     if (parsed.kind === 'CAPTURE_COMPLETED' && parsed.providerCaptureId !== null) {
       predicate = eq(paymentOrder.providerCaptureId, parsed.providerCaptureId);

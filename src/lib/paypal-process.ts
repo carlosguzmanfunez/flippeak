@@ -3,7 +3,7 @@ import {
   parseProviderEvent,
   planProcessing,
 } from '@/modules/payments/paypal/order-state';
-import type { ProcessingPlan } from '@/modules/payments/paypal/order-state';
+import type { ParsedEvent, ProcessingPlan } from '@/modules/payments/paypal/order-state';
 
 /**
  * Verified webhook processing flow (Phase 10, ADR-014).
@@ -38,8 +38,12 @@ export type WebhookFlowDeps = {
    * (provider, provider_event_id) already exists.
    */
   readonly insertEventIfAbsent: (input: WebhookInput) => Promise<boolean>;
-  /** Local order by capture id first, then by order id (ADR-014). */
-  readonly loadOrder: (input: WebhookInput) => Promise<{
+  /**
+   * Local order by capture id first, then by order id (ADR-014).
+   * Receives the ALREADY PARSED event so the normalized ids are the single
+   * form of truth across the flow (never re-parse raw shapes in the deps).
+   */
+  readonly loadOrder: (event: ParsedEvent) => Promise<{
     readonly id: string;
     readonly state: 'PENDING' | 'APPROVED' | 'CAPTURED' | 'ABANDONED' | 'REFUNDED';
     readonly amountCents: number;
@@ -81,7 +85,7 @@ export async function processVerifiedEvent(
   const inserted = await deps.insertEventIfAbsent(input);
   if (!inserted) return { ok: true, action: 'EVENT_ALREADY_PROCESSED' };
 
-  const order = await deps.loadOrder({ ...input, resource: parsed });
+  const order = await deps.loadOrder(parsed);
   if (order === null) {
     if (parsed.kind === 'CAPTURE_COMPLETED') {
       await deps.recordOrphan(input.providerEventId, 'CAPTURE_COMPLETED without local order');
