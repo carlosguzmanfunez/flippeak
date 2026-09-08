@@ -87,10 +87,15 @@ describe('processVerifiedEvent — capture sovereignty', () => {
 });
 
 describe('processVerifiedEvent — approval and verdicts', () => {
-  it('marks an order approved', async () => {
+  it('CHECKOUT.ORDER.APPROVED is lifecycle-only: never credits, never activates', async () => {
+    // Point 2 of the review: APPROVED is not financial authority. The flow
+    // has no path to funding/ledger from this event; the only effects are the
+    // local order state and the event verdict.
     const deps = makeDeps({}, localOrder({ state: 'PENDING' }));
     expect(await processVerifiedEvent(deps, orderApproved)).toEqual({ ok: true, action: 'MARK_APPROVED' });
     expect(deps.markApproved).toHaveBeenCalledWith('order-1');
+    expect(deps.creditAndActivate).not.toHaveBeenCalled();
+    expect(deps.recordOrphan).not.toHaveBeenCalled();
   });
 
   it('persists a PROCEESSED verdict after a successful credit+activation', async () => {

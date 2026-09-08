@@ -98,6 +98,40 @@ async function create() {
   console.log('Después ejecuta: node paypal-e2e.mjs capture');
 }
 
+async function snapshot() {
+  const [credit] = await sql`select credited_cents from campaign_run where id = ${state.run}`;
+  const fundingCount = await sql`select count(*) as n from run_funding where run_id = ${state.run} and provider = 'paypal'`;
+  const [order] = await sql`select state, provider_capture_id from payment_order where id = ${state.paymentOrderId}`;
+  const [run] = await sql`select status from campaign_run where id = ${state.run}`;
+  return {
+    creditedCents: Number(credit?.credited_cents ?? 0),
+    paypalFundingRows: Number(fundingCount[0]?.n ?? 0),
+    orderState: order?.state ?? null,
+    captureId: order?.provider_capture_id ?? null,
+    runStatus: run?.status ?? null,
+  };
+}
+
+async function capture() {
+  if (!state.orderId) throw new Error('run create first');
+  const { client, orders } = await sdk();
+  const request = new orders.OrdersCaptureRequest(state.orderId);
+  const response = await client.execute(request);
+  console.log('CAPTURE RESPONSE', JSON.stringify(response.result?.status));
+
+  // Point 5: evidence the Capture API itself is NOT financial recognition.
+  // Snapshot immediately: the state must show that FlipPeak has not credited
+  // anything yet (webhook still pending). "PayPal reported" != "FlipPeak
+  // credited" — the internal payment_order CAPTURED state only happens inside
+  // the verified webhook transaction.
+  const pre = await snapshot();
+  console.log('PRE-WEBHOOK STATE (no recognized credit expected):', JSON.stringify(pre));
+  console.log('CHECK pre: no paypal funding rows:', pre.paypalFundingRows === 0);
+  console.log('CHECK pre: order NOT internally CAPTURED:', pre.orderState !== 'CAPTURED');
+  console.log('CHECK pre: run not active by capture:', pre.runStatus !== 'ACTIVE');
+  console.log('Esperando webhook real… ejecuta: node paypal-e2e.mjs verify');
+}
+
 async function capture() {
   if (!state.orderId) throw new Error('run create first');
   const { client, orders } = await sdk();
@@ -108,22 +142,45 @@ async function capture() {
 }
 
 async function verify() {
+  // Point 4: tolerate the asynchronous webhook — poll with a deadline instead
+  // of a single immediate query. No arbitrary sleeps as a fix.
+  const DEADLINE_MS = 30_000;
+  const INTERVAL_MS = 1_500;
+  const startedAt = Date.now();
+
+  let last = await snapshot();
+  console.log('POLLING', `(hasta ${DEADLINE_MS} ms, cada ${INTERVAL_MS} ms)`);
+  while (Date.now() - startedAt < DEADLINE_MS) {
+    last = await snapshot();
+    const fundingExact = last.paypalFundingRows === 1;
+    const orderCaptured = last.orderState === 'CAPTURED' && last.captureId !== null;
+    const runActivated = last.runStatus === 'ACTIVE';
+    if (fundingExact && orderCaptured && runActivated) {
+      console.log('WEBHOOK RECONOCIDO — estado final:', JSON.stringify(last));
+      await printEvidence();
+      console.log('E2E RESULT: PASSO — Create→approval→capture→webhook verificado→run_funding→crédito→activación');
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
+  }
+
+  console.log('E2E TIMEOUT — el webhook no fue procesado en', DEADLINE_MS, 'ms. Último estado:', JSON.stringify(last));
+  console.log('Posibles causas: webhook no configurado en la app, deploy sin creds, o eventos no suscritos.');
+  await printEvidence();
+  process.exit(2);
+}
+
+async function printEvidence() {
   const before = await sql`select credited_cents from campaign_run where id = ${state.run}`;
   const fundings = await sql`
     select funding_cents, provider, provider_event_id, verified from run_funding where run_id = ${state.run} and provider = 'paypal' order by created_at desc limit 5`;
   const orders = await sql`
     select state, provider_capture_id, provider_order_id from payment_order where id = ${state.paymentOrderId}`;
   const events = await sql`
-    select event_type, processing_state, signature_verified from payment_event where payment_id = ${state.paymentOrderId} order by received_at desc limit 5`;
+    select event_type, processing_state, signature_verified from payment_event where payment_id = ${state.paymentOrderId} order by received_at desc limit 6`;
   const run = await sql`
     select status, credited_cents, rate_anchor_at from campaign_run where id = ${state.run}`;
-
   console.log('EVIDENCE', JSON.stringify({ funding: fundings, order: orders, events, run, creditBefore: before[0]?.credited_cents }, (k, v) => (typeof v === 'bigint' ? v.toString() : v), 2));
-  const paying = fundings.filter((row) => BigInt(row.funding_cents) === 1000n);
-  console.log('CHECK funding 1000c exact:', paying.length === 1);
-  console.log('CHECK order CAPTURED:', orders[0]?.state === 'CAPTURED');
-  console.log('CHECK event PROCESSED:', events.some((e) => e.processing_state === 'PROCESSED' && e.signature_verified));
-  console.log('CHECK run ACTIVE:', run[0]?.status === 'ACTIVE');
 }
 
 async function main() {

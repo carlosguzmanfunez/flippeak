@@ -92,7 +92,13 @@ describe('createCheckoutOrder', () => {
 });
 
 describe('captureCheckoutOrder — server side, but never the credit authority', () => {
-  it('captures an approved provider order and reports state without crediting', async () => {
+  it('captures at PayPal and reports state, with no financial path at all', async () => {
+    // Point 3 of the review: "PayPal reported a capture" != "FlipPeak
+    // recognized and credited it". The only dependencies this path can touch
+    // are the owner load and the provider SDK call — there is no funding,
+    // ledger, credit or activation operation in the Capture API path. The
+    // internal CAPTURED order state is written exclusively inside the
+    // verified webhook transaction (paypal-provider-deps.creditAndActivate).
     const deps = makeDeps();
     expect(await captureCheckoutOrder(deps, { paymentOrderId })).toEqual({
       ok: true,
@@ -100,6 +106,8 @@ describe('captureCheckoutOrder — server side, but never the credit authority',
       paymentOrderState: 'CAPTURED',
     });
     expect(deps.captureProviderOrder).toHaveBeenCalledWith({ providerOrderId: 'P-ORDER-1' });
+    expect(deps.insertOrder).not.toHaveBeenCalled();
+    expect(deps.createProviderOrder).not.toHaveBeenCalled();
   });
 
   it('refuses an already captured order', async () => {
