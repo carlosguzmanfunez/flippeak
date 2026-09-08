@@ -20,9 +20,22 @@
 // ============================================================
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
 
 import { neon } from '@neondatabase/serverless';
+
+// Load .env.local so the harness runs against the same local configuration the
+// app uses (node does not load dotfiles itself). Values stay in the process
+// environment only — nothing is ever printed.
+try {
+  for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
+    const match = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+    if (match && process.env[match[1]] === undefined) {
+      process.env[match[1]] = match[2].trim().replace(/^"([\s\S]*)"$/, '$1').replace(/^'([\s\S]*)'$/, '$1');
+    }
+  }
+} catch {
+  // .env.local absent: run against the ambient environment.
+}
 
 const STATE_FILE = '.paypal-e2e-state.json';
 const TEST_AMOUNT_CENTS = 10_000; // $10.00 — importe de prueba válido en Sandbox
@@ -46,7 +59,8 @@ function saveState() {
 }
 
 async function sdk() {
-  const sdk = await import('@paypal/checkout-server-sdk');
+  const loaded = await import('@paypal/checkout-server-sdk');
+  const sdk = loaded.default ?? loaded; // CJS interop
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
   if (!clientId || !clientSecret) throw new Error('provider not configured');
@@ -59,7 +73,7 @@ async function sdk() {
 
 async function findRun() {
   const rows = await sql`
-    select cr.id, c.org_id as _x, c.title, c.owner_user_id
+    select cr.id, c.title, c.owner_user_id
     from campaign_run cr join campaign c on c.id = cr.campaign_id
     where cr.status = 'DRAFT' and c.title = 'FlipPeak Test Campaign' and c.owner_user_id = '0UYjthBgrItKQcbxEt2TvKWEsow02W5t'
     order by cr.created_at desc limit 1`;
@@ -130,15 +144,6 @@ async function capture() {
   console.log('CHECK pre: order NOT internally CAPTURED:', pre.orderState !== 'CAPTURED');
   console.log('CHECK pre: run not active by capture:', pre.runStatus !== 'ACTIVE');
   console.log('Esperando webhook real… ejecuta: node paypal-e2e.mjs verify');
-}
-
-async function capture() {
-  if (!state.orderId) throw new Error('run create first');
-  const { client, orders } = await sdk();
-  const request = new orders.OrdersCaptureRequest(state.orderId);
-  const response = await client.execute(request);
-  console.log('CAPTURE RESPONSE', JSON.stringify(response.result?.status));
-  console.log('El webhook PAYMENT.CAPTURE.COMPLETED llega al deploy. Espera unos segundos y ejecuta: node paypal-e2e.mjs verify');
 }
 
 async function verify() {

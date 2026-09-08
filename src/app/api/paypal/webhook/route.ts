@@ -77,12 +77,12 @@ async function verifyPayPalSignature(
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
   if (!clientId || !clientSecret) return false;
 
+  const sdk = await paypalSdk();
   const environment =
     process.env.PAYPAL_ENVIRONMENT === 'production'
-      ? (await paypalSdk()).core.LiveEnvironment
-      : (await paypalSdk()).core.SandboxEnvironment;
+      ? sdk.core.LiveEnvironment
+      : sdk.core.SandboxEnvironment;
 
-  const sdk = await paypalSdk();
   const client = new sdk.core.PayPalHttpClient(new environment(clientId, clientSecret));
   const request = new sdk.webhooks.VerifyWebhookSignatureRequest();
   request.requestBody({
@@ -101,5 +101,6 @@ async function verifyPayPalSignature(
 }
 
 async function paypalSdk() {
-  return import('@paypal/checkout-server-sdk');
+  const loaded = await import('@paypal/checkout-server-sdk');
+  return loaded.default ?? loaded; // CJS interop: namespace carries default
 }

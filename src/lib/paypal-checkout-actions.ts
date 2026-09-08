@@ -85,7 +85,8 @@ const dependencies: CheckoutDependencies = {
 };
 
 async function paypalSdkClient() {
-  const sdk = await import('@paypal/checkout-server-sdk');
+  const loaded = await import('@paypal/checkout-server-sdk');
+  const sdk = loaded.default ?? loaded; // CJS interop: namespace carries default
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
   if (!clientId || !clientSecret) throw new Error('provider not configured');
