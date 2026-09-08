@@ -42,6 +42,25 @@ type LockedRunRow = {
   readonly nowMsCeiled: number;
 };
 
+/**
+ * Decodes a run row locked for update.
+ *
+ * `creditedCents`/`consumedCentMs` come from `bigint` columns mapped with
+ * `mode: 'number'` by Drizzle, but the SQL-wrapped `elapsedMsCeiled` and
+ * `nowMsCeiled` come back through the wire as plain strings (postgres bigint
+ * is text). The conversion to `number` is explicit and happens right here at
+ * the transport boundary — after this point the pure engine only ever sees
+ * safe integers.
+ */
+const decodeLockedRun = (row: Omit<LockedRunRow, 'elapsedMsCeiled' | 'nowMsCeiled'> & {
+  elapsedMsCeiled: string | number;
+  nowMsCeiled: string | number;
+}): LockedRunRow => ({
+  ...row,
+  elapsedMsCeiled: Number(row.elapsedMsCeiled),
+  nowMsCeiled: Number(row.nowMsCeiled),
+});
+
 const LOCKED_RUN_PROJECTION = {
   id: campaignRun.id,
   status: campaignRun.status,
@@ -62,8 +81,9 @@ export async function settleAndMaterialize(runId: string): Promise<AccountingSet
   return db().transaction(async (tx) => {
     const rows = await tx.select(LOCKED_RUN_PROJECTION).from(campaignRun).where(eq(campaignRun.id, runId)).for('update').limit(1);
 
-    const run = rows[0] as LockedRunRow | undefined;
-    if (run === undefined) return { ok: false, reason: 'RUN_NOT_FOUND' };
+    const raw = rows[0];
+    if (raw === undefined) return { ok: false, reason: 'RUN_NOT_FOUND' };
+    const run = decodeLockedRun(raw);
 
     const result = consume({
       creditedCents: run.creditedCents,
