@@ -13,11 +13,6 @@ declare module '@paypal/checkout-server-sdk' {
     SandboxEnvironment: new (clientId: string, clientSecret: string) => unknown;
     LiveEnvironment: new (clientId: string, clientSecret: string) => unknown;
   };
-  export const webhooks: {
-    VerifyWebhookSignatureRequest: new () => {
-      requestBody(body: Record<string, unknown>): void;
-    };
-  };
   export const orders: {
     OrdersCreateRequest: new () => {
       prefer(value: string): void;

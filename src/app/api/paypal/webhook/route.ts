@@ -64,9 +64,11 @@ export async function POST(request: Request): Promise<Response> {
 /**
  * Server-to-server signature check (ADR-014 §6).
  *
- * The SDK is loaded lazily and only when credentials exist; the environment is
- * picked from PAYPAL_ENVIRONMENT (sandbox unless production is explicitly
- * approved, per the .env.example contract).
+ * The installed checkout SDK (v1.0.3) does not expose webhook verification, so
+ * the check goes directly against the REST endpoint with Basic auth of the app
+ * credentials. This is the same authority PayPal uses for its own deliveries;
+ * only the environment (sandbox/live) differs, per PAYPAL_ENVIRONMENT. No
+ * secrets cross any log or response; the result is a boolean.
  */
 async function verifyPayPalSignature(
   payloadText: string,
@@ -77,30 +79,28 @@ async function verifyPayPalSignature(
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
   if (!clientId || !clientSecret) return false;
 
-  const sdk = await paypalSdk();
-  const environment =
+  const base =
     process.env.PAYPAL_ENVIRONMENT === 'production'
-      ? sdk.core.LiveEnvironment
-      : sdk.core.SandboxEnvironment;
+      ? 'https://api-m.paypal.com'
+      : 'https://api-m.sandbox.paypal.com';
 
-  const client = new sdk.core.PayPalHttpClient(new environment(clientId, clientSecret));
-  const request = new sdk.webhooks.VerifyWebhookSignatureRequest();
-  request.requestBody({
-    auth_algo: headers.get('paypal-auth-algo'),
-    cert_url: headers.get('paypal-cert-url'),
-    transmission_id: headers.get('paypal-transmission-id'),
-    transmission_sig: headers.get('paypal-transmission-sig'),
-    transmission_time: headers.get('paypal-transmission-time'),
-    webhook_id: webhookId,
-    webhook_event: JSON.parse(payloadText),
+  const response = await fetch(`${base}/v1/notifications/verify-webhook-signature`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      auth_algo: headers.get('paypal-auth-algo'),
+      cert_url: headers.get('paypal-cert-url'),
+      transmission_id: headers.get('paypal-transmission-id'),
+      transmission_sig: headers.get('paypal-transmission-sig'),
+      transmission_time: headers.get('paypal-transmission-time'),
+      webhook_id: webhookId,
+      webhook_event: JSON.parse(payloadText),
+    }),
   });
 
-  const response = await client.execute(request);
-  const result = response.result as { verification_status?: string };
+  const result = (await response.json()) as { verification_status?: string };
   return result.verification_status === 'SUCCESS';
-}
-
-async function paypalSdk() {
-  const loaded = await import('@paypal/checkout-server-sdk');
-  return loaded.default ?? loaded; // CJS interop: namespace carries default
 }
