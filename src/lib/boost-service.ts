@@ -44,7 +44,7 @@ const LOCKED_BOOST_PROJECTION = {
 
 export type ApplyBoostOutcome =
   | { readonly ok: true; readonly appliedRateCentsPerHour: number }
-  | { readonly ok: false; readonly reason: 'RATE_DECREASED' | 'INVALID_TIME_RATE' | 'SETTLEMENT_TOO_SOON' | 'RUN_NOT_ACTIVE' | 'INCONSISTENT' };
+  | { readonly ok: false; readonly reason: 'RATE_DECREASED' | 'INVALID_TIME_RATE' | 'SETTLEMENT_TOO_SOON' | 'RUN_EXHAUSTED' | 'RUN_NOT_ACTIVE' | 'INCONSISTENT' };
 
 export async function applyBoost(
   runId: string,
@@ -93,7 +93,8 @@ export async function applyBoost(
       if (
         result.reason === 'INVALID_TIME_RATE' ||
         result.reason === 'RATE_DECREASED' ||
-        result.reason === 'SETTLEMENT_TOO_SOON'
+        result.reason === 'SETTLEMENT_TOO_SOON' ||
+        result.reason === 'RUN_EXHAUSTED'
       ) {
         return { ok: false, reason: result.reason };
       }

@@ -109,6 +109,14 @@ describe('boostRunAction', () => {
       ok: false,
       reason: 'SETTLEMENT_TOO_SOON',
     });
+
+    const dead = makeDeps({
+      applyBoost: vi.fn().mockResolvedValue({ ok: false, reason: 'RUN_EXHAUSTED' }),
+    });
+    expect(await boostRunAction(dead, { runId, proposedRateCentsPerHour: 20_000 })).toEqual({
+      ok: false,
+      reason: 'RUN_EXHAUSTED',
+    });
   });
 
   it('hides a transaction failure behind a safe reason', async () => {

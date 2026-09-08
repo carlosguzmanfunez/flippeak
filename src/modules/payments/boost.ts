@@ -36,6 +36,7 @@ export type BoostRunResult =
   | { readonly ok: false; readonly reason: 'INVALID_TIME_RATE' }
   | { readonly ok: false; readonly reason: 'RATE_DECREASED' }
   | { readonly ok: false; readonly reason: 'SETTLEMENT_TOO_SOON' }
+  | { readonly ok: false; readonly reason: 'RUN_EXHAUSTED' }
   | { readonly ok: false; readonly reason: 'UNEXPECTED' };
 
 export type OwnedRunForBoost = {
@@ -58,7 +59,7 @@ export type BoostDependencies = {
    */
   readonly applyBoost: (input: { readonly runId: string; readonly proposedRateCentsPerHour: number }) => Promise<
     | { readonly ok: true; readonly appliedRateCentsPerHour: number }
-    | { readonly ok: false; readonly reason: 'RATE_DECREASED' | 'INVALID_TIME_RATE' | 'SETTLEMENT_TOO_SOON' | 'RUN_NOT_ACTIVE' | 'INCONSISTENT' }
+    | { readonly ok: false; readonly reason: 'RATE_DECREASED' | 'INVALID_TIME_RATE' | 'SETTLEMENT_TOO_SOON' | 'RUN_EXHAUSTED' | 'RUN_NOT_ACTIVE' | 'INCONSISTENT' }
   >;
 };
 

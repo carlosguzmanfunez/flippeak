@@ -405,7 +405,8 @@ describe('boost', () => {
 
   it('refuses a boost that would advance the anchor by zero milliseconds', () => {
     // Otherwise the fraction of a millisecond already elapsed at the old rate
-    // would be charged at the new one (ADR-011).
+    // would be charged at the new one (ADR-011). The run still has room, so
+    // the reason is precisely SETTLEMENT_TOO_SOON — not RUN_EXHAUSTED.
     expect(boostRun(funded(), ANCHOR, 10_000)).toEqual({
       ok: false,
       reason: 'SETTLEMENT_TOO_SOON',
@@ -414,6 +415,38 @@ describe('boost', () => {
       ok: false,
       reason: 'SETTLEMENT_TOO_SOON',
     });
+  });
+
+  it('refuses a boost on an already economically exhausted run with RUN_EXHAUSTED', () => {
+    // Stale-ACTIVE shape: consumed exactly at capacity. Nothing more can ever
+    // be settled, so "too soon" would be the wrong story — the run is dead.
+    const capacity = centsToCentMilliseconds(5_000);
+    const dead = funded({ consumedCentMs: capacity });
+    expect(boostRun(dead, ANCHOR + 5_000, 10_000)).toEqual({
+      ok: false,
+      reason: 'RUN_EXHAUSTED',
+    });
+    expect(boostRun(dead, ANCHOR, 10_000)).toEqual({
+      ok: false,
+      reason: 'RUN_EXHAUSTED',
+    });
+  });
+
+  it('refuses a boost whose own settlement exhausts the run', () => {
+    // 1 cent at $1,000/h is 3,600,000 cent-ms = 36 ms of life. With 3.55 M
+    // already consumed, only 50,000 cent-ms remain = 0.5 ms: the settlement in
+    // the boost consumes it all, so the boost must refuse rather than attach
+    // a live rate to a dead run.
+    const state = funded({ timeRateCentsPerHour: 100_000, creditedCents: 1, consumedCentMs: 3_550_000 });
+    expect(boostRun(state, ANCHOR + 1_000, 100_000)).toEqual({
+      ok: false,
+      reason: 'RUN_EXHAUSTED',
+    });
+    // The settled values confirm the exhaust: settledMs clamps to msToExhaust,
+    // consumed lands exactly on capacity.
+    const settled = settle(state, ANCHOR + 1_000);
+    expect(settled.settledMs).toBe(1);
+    expect(settled.consumedCentMs).toBe(centsToCentMilliseconds(1));
   });
 
   it('shortens the remaining life when the rate rises', () => {

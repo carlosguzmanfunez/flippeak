@@ -302,13 +302,14 @@ async function validateActiveBoosted(childId: string): Promise<void> {
 
   // ADR-012 live guard: a boosted-away run (1 cent already fully settled at
   // the old rate) is economically dead — no room at any rate — so a second
-  // boost must be refused by the engine (SETTLEMENT_TOO_SOON), not accepted.
+  // boost must be refused with RUN_EXHAUSTED, the precise semantic
+  // (SETTLEMENT_TOO_SOON means "a whole ms has not passed", ADR-011/013).
   if (row?.consumed !== undefined && row?.consumed === row?.credited * CENT_MS_PER_CENT) {
     const second = await boostRunAction(boostDepsForOwner(), {
       runId: childId,
       proposedRateCentsPerHour: 30_300,
     });
-    expect(second).toEqual({ ok: false, reason: 'SETTLEMENT_TOO_SOON' });
+    expect(second).toEqual({ ok: false, reason: 'RUN_EXHAUSTED' });
   }
 }
 

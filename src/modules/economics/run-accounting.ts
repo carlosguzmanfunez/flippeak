@@ -217,7 +217,7 @@ export function settleRun(
   };
 }
 
-export type BoostFailure = AccountingFailure | 'RATE_DECREASED' | 'SETTLEMENT_TOO_SOON';
+export type BoostFailure = AccountingFailure | 'RATE_DECREASED' | 'SETTLEMENT_TOO_SOON' | 'RUN_EXHAUSTED';
 
 export type BoostResult =
   | { readonly ok: true; readonly value: BoostedRun }
@@ -242,9 +242,17 @@ export type BoostedRun = {
  * run has already been ranked at its rate, and lowering it would let a campaign
  * take a position and then pay less to hold it.
  *
- * A boost that would advance the anchor by zero milliseconds is refused. Without
- * that rule the fraction of a millisecond already elapsed at the old rate would
- * be charged at the new one (ADR-011).
+ * A boost that would advance the anchor by zero milliseconds is refused —
+ * the anchor has nothing to charge — but ONLY when the run still has room to
+ * live. If the run is already economically exhausted, the reason is
+ * RUN_EXHAUSTED, not SETTLEMENT_TOO_SOON: the latter means "less than one
+ * whole millisecond has passed", not "the run is out of money" (ADR-012).
+ *
+ * If the settlement performed as part of the boost consumes the last of the
+ * credit, the boost is refused with RUN_EXHAUSTED: at the authoritative instant
+ * the run has no economic future left, so applying the new rate would attach a
+ * live rate to a dead run. Materialisation is the settle path's job — boost
+ * never writes status.
  */
 export function boostRun(
   state: RunAccountingState,
@@ -261,8 +269,17 @@ export function boostRun(
   const settled = settleRun(state, atMs);
   if (!settled.ok) return settled;
 
+  const capacity = state.creditedCents * CENT_MS_PER_CENT;
+  const exhaustedNow = settled.value.consumedCentMs >= capacity;
+
   if (settled.value.settledMs === 0) {
-    return { ok: false, reason: 'SETTLEMENT_TOO_SOON' };
+    return exhaustedNow
+      ? { ok: false, reason: 'RUN_EXHAUSTED' }
+      : { ok: false, reason: 'SETTLEMENT_TOO_SOON' };
+  }
+
+  if (exhaustedNow) {
+    return { ok: false, reason: 'RUN_EXHAUSTED' };
   }
 
   return {
