@@ -33,14 +33,23 @@ export const SPOTLIGHT_ROTATION_INTERVAL_MS = 20_000;
 /** A run is "expiring" at or below this much projected remaining runtime. */
 export const EXPIRY_WARNING_THRESHOLD_MS = 10 * 60 * 1000;
 
-/*
- * NOT DEFINED YET — minimum funding per run.
+/**
+ * LAUNCH COMMERCIAL FUNDING POLICY (Phase 15) — product policy, NOT the
+ * exactness domain.
  *
- * Deliberately unresolved product constant. A minimum runtime rule would imply
- * a large minimum funding amount at high Time Rates, which has not been
- * approved. This must be defined before checkout/payment validation is built.
- * See docs/architecture-decisions.md, ADR-006.
+ * Decoupled from MAX_FUND_AMOUNT_CENTS (ADR-014 mathematical ceiling, never a
+ * commercial limit). Change these values to change the policy; the engine and
+ * the exactness ceiling are untouched. $-equivalent: min $5, max $5,000,
+ * whole-dollar steps.
  */
+export const FUNDING_POLICY = {
+  minCents: 500,
+  maxCents: 500_000,
+  stepCents: 100,
+} as const;
+
+/** UX-only threshold: below this estimated runtime, show a short-runtime note. */
+export const SHORT_RUNTIME_WARNING_MS = 60_000;
 
 /** Primary competitive categories (master prompt section 15). */
 export const CATEGORIES = [

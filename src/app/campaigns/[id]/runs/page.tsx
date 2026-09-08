@@ -90,7 +90,10 @@ export default async function CampaignRunsPage({ params }: { params: Promise<{ i
                     <div className="mt-3 space-y-3">
                       {run.status === 'DRAFT' ? (
                         latestPayment === undefined ? (
-                          <CheckoutControl runId={run.id} />
+                          <CheckoutControl
+                            runId={run.id}
+                            timeRateCentsPerHour={run.timeRateCentsPerHour}
+                          />
                         ) : (
                           <PaymentStatus
                             orderId={latestPayment.orderId}

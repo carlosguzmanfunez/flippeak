@@ -69,6 +69,21 @@ describe('createCheckoutOrder', () => {
     expect(deps.insertOrder).not.toHaveBeenCalled();
   });
 
+  it('enforces the decoupled COMMERCIAL_BUDGET_POLICY ($5–$5,000, $1 steps)', async () => {
+    const deps = makeDeps();
+    for (const amount of [499, 500_001, 10_050]) {
+      expect(await createCheckoutOrder(deps, { runId, amountCents: amount })).toEqual({
+        ok: false,
+        reason: 'OUTSIDE_FUNDING_POLICY',
+      });
+    }
+    for (const amount of [500, 10_000, 500_000]) {
+      const result = await createCheckoutOrder(deps, { runId, amountCents: amount });
+      expect(result.ok).toBe(true);
+    }
+    expect(deps.insertOrder).toHaveBeenCalledTimes(3);
+  });
+
   it('accepts the sandbox test amount ($10.00) as a technical amount, without inventing policy', async () => {
     const deps = makeDeps();
     expect(await createCheckoutOrder(deps, { runId, amountCents: 10_000 })).toEqual({

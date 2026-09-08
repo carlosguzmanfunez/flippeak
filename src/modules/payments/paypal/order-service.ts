@@ -2,6 +2,7 @@ import { decideUserAccess } from '@/modules/auth/access';
 import type { AuthenticatedPrincipal } from '@/modules/auth/principal';
 import { isUuidLike } from '@/modules/campaigns/campaign-run';
 import { MAX_FUND_AMOUNT_CENTS } from '@/db/payment-schema';
+import { FUNDING_POLICY } from '@/config/domain-config';
 
 /**
  * Checkout orchestration (Phase 10-B, ADR-014).
@@ -22,6 +23,7 @@ export type CheckoutOrderResult =
   | { readonly ok: false; readonly reason: 'RUN_NOT_FOUND' }
   | { readonly ok: false; readonly reason: 'RUN_NOT_DRAFT' }
   | { readonly ok: false; readonly reason: 'INVALID_AMOUNT' }
+  | { readonly ok: false; readonly reason: 'OUTSIDE_FUNDING_POLICY' }
   | { readonly ok: false; readonly reason: 'PROVIDER_NOT_CONFIGURED' }
   | { readonly ok: false; readonly reason: 'UNEXPECTED' };
 
@@ -68,6 +70,18 @@ function isFundableCheckoutAmount(cents: unknown): cents is number {
   );
 }
 
+/**
+ * COMMERCIAL_BUDGET_POLICY (decoupled, configurable — Phase 15). Product
+ * bounds from FUNDING_POLICY; the exactness ceiling above stays untouched.
+ */
+function isWithinFundingPolicy(cents: number): boolean {
+  return (
+    cents >= FUNDING_POLICY.minCents &&
+    cents <= FUNDING_POLICY.maxCents &&
+    cents % FUNDING_POLICY.stepCents === 0
+  );
+}
+
 export async function createCheckoutOrder(
   deps: CheckoutDependencies,
   input: { readonly runId: unknown; readonly amountCents: unknown },
@@ -81,6 +95,9 @@ export async function createCheckoutOrder(
   const run = await deps.loadOwnedRun(principal, input.runId);
   if (run === null) return { ok: false, reason: 'RUN_NOT_FOUND' };
   if (run.status !== 'DRAFT') return { ok: false, reason: 'RUN_NOT_DRAFT' };
+  if (!isWithinFundingPolicy(input.amountCents)) {
+    return { ok: false, reason: 'OUTSIDE_FUNDING_POLICY' };
+  }
 
   try {
     const paymentOrderId = await deps.insertOrder({ runId: run.id, amountCents: input.amountCents });

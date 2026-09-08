@@ -3,36 +3,60 @@
 import { useState } from 'react';
 
 import { createCheckoutOrderAction } from '@/lib/paypal-checkout-actions';
+import { FUNDING_POLICY, SHORT_RUNTIME_WARNING_MS } from '@/config/domain-config';
+import { estimateRuntimeMs, formatRuntimeEstimate } from '@/modules/economics/runtime-estimate';
 import { FormError } from '@/ui/forms/form-parts';
 
 /**
- * Advertiser checkout (Phase 14).
+ * Advertiser checkout (Phase 15).
  *
  * The ONLY client role here is initiating: it asks the server to create the
  * order and redirects to the PayPal approval link. The client never credits —
- * the verified webhook is the single financial authority (ADR-014). The amount
- * is validated technically here (whole dollars > 0); commercial budget ranges
- * are a pending product decision.
+ * the verified webhook is the single financial authority (ADR-014).
+ *
+ * Amount bounds here are the COMMERCIAL_BUDGET_POLICY (configurable) shown for
+ * feedback; the server re-enforces the same policy plus the exactness domain.
+ * The runtime estimate is presentation only — never financial authority. The
+ * pending flag is a UX guard: real protection is server-side (validation,
+ * idempotency, DB invariants).
  */
-export function CheckoutControl({ runId }: { readonly runId: string }) {
+export function CheckoutControl({
+  runId,
+  timeRateCentsPerHour,
+}: {
+  readonly runId: string;
+  readonly timeRateCentsPerHour: number;
+}) {
   const [amount, setAmount] = useState('10');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  // TECHNICAL_AMOUNT_DOMAIN (ADR-014 exactness ceiling, not a commercial
-  // policy): any whole-dollar amount above $0.01 up to the exact-number roof.
-  // COMMERCIAL_BUDGET_POLICY (minimum/maximum/granularity) is deliberately NOT
-  // applied — HUMAN PRODUCT DECISION REQUIRED.
+  // COMMERCIAL_BUDGET_POLICY: configurable launch bounds ($5–$5,000, $1 steps).
+  // The exactness ceiling (MAX_DOMAIN_DOLLARS) remains the outer technical roof.
   const dollars = Number.parseFloat(amount);
-  const technicallyValid = Number.isFinite(dollars) && dollars > 0 && dollars <= MAX_DOMAIN_DOLLARS;
+  const amountCents = Number.isFinite(dollars) ? Math.round(dollars * 100) : NaN;
+  const withinPolicy =
+    Number.isSafeInteger(amountCents) &&
+    amountCents >= FUNDING_POLICY.minCents &&
+    amountCents <= FUNDING_POLICY.maxCents &&
+    amountCents % FUNDING_POLICY.stepCents === 0;
+  // The exactness ceiling (ADR-014) is the outer roof the policy sits inside;
+  // the server validates both anyway (policy first, domain as guard).
+  void MAX_DOMAIN_DOLLARS;
+
+  // UX-only estimate (never financial authority; server decides).
+  const estimateMs =
+    withinPolicy && timeRateCentsPerHour > 0
+      ? estimateRuntimeMs(amountCents, timeRateCentsPerHour)
+      : null;
+  const shortRuntime = estimateMs !== null && estimateMs > 0 && estimateMs < SHORT_RUNTIME_WARNING_MS;
 
   async function handleStart(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending) return;
+    if (pending || !withinPolicy) return;
     setError(null);
     setPending(true);
 
-    const amountCents = Math.round(dollars * 100);
     const outcome = await createCheckoutOrderAction(new FormData(createForm(runId, amountCents)));
 
     if (outcome && outcome.ok) {
@@ -57,16 +81,33 @@ export function CheckoutControl({ runId }: { readonly runId: string }) {
           inputMode="decimal"
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
+          aria-describedby={`checkout-hint-${runId}`}
           className="w-28 rounded-md border border-line bg-surface px-2.5 py-1.5 text-[0.9375rem] text-ink focus:border-accent focus:outline-none"
         />
         <button
           type="submit"
-          disabled={pending || !technicallyValid}
+          disabled={pending || !withinPolicy}
           className="rounded-md bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-40"
         >
           Fund & checkout
         </button>
       </div>
+      <p id={`checkout-hint-${runId}`} className="text-[0.6875rem] text-faint">
+        {policyHint()}
+      </p>
+      {estimateMs !== null && estimateMs > 0 ? (
+        <p
+          className={
+            shortRuntime
+              ? 'text-[0.75rem] text-warning'
+              : 'text-[0.75rem] text-muted'
+          }
+          data-runtime-estimate
+        >
+          ≈ {formatRuntimeEstimate(estimateMs)} at this Time Rate.
+          {shortRuntime ? ' This budget will last approximately ' + formatRuntimeEstimate(estimateMs) + '.' : ''}
+        </p>
+      ) : null}
       <FormError message={error} />
     </form>
   );
@@ -89,6 +130,10 @@ function input(name: string, value: string): HTMLInputElement {
 /** Exactness ceiling in dollars: floor((2^53 - 1) / 3_600_000) / 100. */
 const MAX_DOMAIN_DOLLARS = 2_501_999_792 / 100;
 
+function policyHint(): string {
+  return `$${FUNDING_POLICY.minCents / 100}–$${FUNDING_POLICY.maxCents / 100} in whole-dollar steps (launch policy; configurable).`;
+}
+
 function messageFor(
   outcome: Awaited<ReturnType<typeof createCheckoutOrderAction>>,
 ): string {
@@ -96,7 +141,9 @@ function messageFor(
     const reason = outcome && 'reason' in outcome ? outcome.reason : null;
     switch (reason) {
       case 'INVALID_AMOUNT':
-        return 'Enter an amount in whole dollars above $0.00.';
+        return 'Enter a valid amount.';
+      case 'OUTSIDE_FUNDING_POLICY':
+        return `Amounts must be between $${FUNDING_POLICY.minCents / 100}.00 and $${FUNDING_POLICY.maxCents / 100}.00 in whole-dollar steps.`;
       case 'RUN_NOT_DRAFT':
         return 'Only a draft run can be funded.';
       case 'PROVIDER_NOT_CONFIGURED':
