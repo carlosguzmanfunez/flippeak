@@ -1,0 +1,47 @@
+/*
+ * FlipPeak design tokens — single source of truth.
+ *
+ * Every colour, type step and radius used in the product resolves to a value
+ * defined here. Components must not introduce raw hex values.
+ *
+ * src/app/globals.css maps these into Tailwind's --color-* namespace so the
+ * utilities stay short (bg-canvas, text-ink, border-line). This file stays
+ * framework-free so design references can consume it directly.
+ */
+
+:root {
+  /* --- surfaces ------------------------------------------------------- */
+  --fp-background: #0a0e1a;
+  --fp-surface: #111726;
+  --fp-surface-raised: #182034;
+  --fp-border: #232c42;
+  --fp-border-strong: #33405e;
+
+  /* --- type ----------------------------------------------------------- */
+  --fp-text-primary: #f2efe9;
+  --fp-text-secondary: #8e97ad;
+  --fp-text-faint: #5d6780;
+
+  /* --- meaning -------------------------------------------------------- */
+  --fp-accent: #6d5df6;
+  --fp-accent-soft: #a79bff;
+  --fp-leader: #d9c08a;
+  --fp-success: #4e9e7a;
+  --fp-warning: #d08a3e;
+  --fp-danger: #d2564f;
+
+  /* --- type scale ----------------------------------------------------- */
+  --fp-size-micro: 0.6875rem;
+  --fp-size-small: 0.8125rem;
+  --fp-size-body: 0.9375rem;
+  --fp-size-lead: 1.0625rem;
+  --fp-size-rate: 1.5rem;
+  --fp-size-rate-leader: 3rem;
+  --fp-size-display: 2rem;
+
+  /* --- rhythm --------------------------------------------------------- */
+  --fp-radius-sm: 4px;
+  --fp-radius-md: 8px;
+  --fp-radius-lg: 14px;
+  --fp-rail: 3px;
+}

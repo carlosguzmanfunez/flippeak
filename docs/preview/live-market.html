@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlipPeak — Live Market design reference</title>
+    <!--
+      DESIGN REFERENCE ONLY. Not application code and not part of the build.
+
+      It links the same src/ui/tokens.css the application uses, so colour and
+      type-scale values cannot drift. The layout CSS below mirrors the Tailwind
+      utilities in src/ui/market/*.tsx and is maintained by hand; the React
+      components remain authoritative.
+    -->
+    <link rel="stylesheet" href="../../src/ui/tokens.css" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--fp-background);
+        color: var(--fp-text-primary);
+        font-family: ui-sans-serif, system-ui, 'Carlito', 'DejaVu Sans', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .figure { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+      .wrap { max-width: 64rem; margin: 0 auto; padding-left: 2rem; padding-right: 2rem; }
+      a { color: inherit; text-decoration: none; }
+
+      header { border-bottom: 1px solid var(--fp-border); }
+      .bar { display: flex; align-items: center; gap: 1.5rem; padding: 1rem 2rem; }
+      .mark { font-size: var(--fp-size-body); font-weight: 600; letter-spacing: -0.02em; }
+      .nav { display: flex; gap: 1.25rem; }
+      .nav a { font-size: var(--fp-size-small); color: var(--fp-text-secondary); }
+      .away { margin-left: auto; font-size: var(--fp-size-small); color: var(--fp-text-faint); }
+
+      .notice { border-bottom: 1px solid var(--fp-border); background: var(--fp-surface); }
+      .notice p { margin: 0; padding: 0.625rem 2rem; font-size: var(--fp-size-micro); color: var(--fp-text-secondary); }
+      .notice strong { color: var(--fp-warning); font-weight: 500; }
+
+      main { padding: 3.5rem 0; }
+      .live { display: flex; align-items: center; gap: 0.625rem; }
+      .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--fp-success); }
+      h1 { margin: 0; font-size: var(--fp-size-body); font-weight: 500; letter-spacing: -0.02em; }
+      .lead { margin: 1rem 0 0; max-width: 52ch; font-size: var(--fp-size-lead); line-height: 1.6; color: var(--fp-text-secondary); }
+      .opportunity { margin: 0.75rem 0 0; max-width: 52ch; font-size: var(--fp-size-small); color: var(--fp-text-faint); }
+      .opportunity span { color: var(--fp-text-secondary); }
+
+      .chips { display: flex; gap: 0.5rem; list-style: none; margin: 2rem 0 0; padding: 0; overflow-x: auto; }
+      .chips a { display: inline-block; white-space: nowrap; border: 1px solid var(--fp-border); border-radius: 999px; padding: 0.375rem 0.875rem; font-size: var(--fp-size-micro); color: var(--fp-text-secondary); }
+      .chips .on a { border-color: var(--fp-accent); background: var(--fp-surface); color: var(--fp-text-primary); }
+
+      .ladder { list-style: none; margin: 2rem 0 0; padding: 0; }
+      .tier { padding: 1.25rem 1.75rem; border-top: 1px solid var(--fp-border); }
+      .tier.leader { border: 1px solid var(--fp-border); border-left: 3px solid var(--fp-leader); border-radius: var(--fp-radius-lg); background: var(--fp-surface-raised); padding: 1.75rem; }
+      .head { display: flex; align-items: baseline; gap: 1rem; }
+      .rank { width: 2rem; flex: none; font-size: var(--fp-size-small); color: var(--fp-text-faint); }
+      .leader .rank { color: var(--fp-leader); font-weight: 500; font-size: var(--fp-size-body); }
+      .rate { margin: 0; font-size: var(--fp-size-rate); font-weight: 500; line-height: 1; }
+      .leader .rate { font-size: var(--fp-size-rate-leader); font-weight: 600; }
+      .shared { margin-left: auto; flex: none; font-size: var(--fp-size-micro); color: var(--fp-text-faint); }
+      .shared i { font-style: normal; }
+
+      .members { list-style: none; margin: 1rem 0 0; padding: 0 0 0 3rem; }
+      .member { padding: 0.375rem 1rem; }
+      .member.spot { background: var(--fp-surface); border-radius: var(--fp-radius-md); padding: 0.75rem 1rem; }
+      .leader .member.spot, .member.solo { background: transparent; padding: 0 1rem; }
+      .solo .name { font-size: var(--fp-size-lead); font-weight: 500; color: var(--fp-text-primary); }
+      .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; }
+      .name { font-size: var(--fp-size-body); color: var(--fp-text-secondary); }
+      .spot .name { font-size: var(--fp-size-lead); font-weight: 500; color: var(--fp-text-primary); }
+      .flag { font-size: var(--fp-size-micro); color: var(--fp-accent-soft); }
+      .left { margin-left: auto; font-size: var(--fp-size-micro); color: var(--fp-text-faint); }
+      .summary { margin: 0.25rem 0 0; max-width: 60ch; font-size: var(--fp-size-small); color: var(--fp-text-secondary); }
+      .taxonomy { margin: 0.5rem 0 0; font-size: var(--fp-size-micro); color: var(--fp-text-faint); }
+      .taxonomy i { font-style: normal; color: var(--fp-border-strong); margin: 0 0.5rem; }
+      .rotation { margin: 0.75rem 0 0; padding-left: 3rem; font-size: var(--fp-size-micro); color: var(--fp-text-faint); }
+
+      footer p { margin: 0; border-top: 1px solid var(--fp-border); padding-top: 1.5rem; font-size: var(--fp-size-micro); color: var(--fp-text-faint); }
+
+      @media (max-width: 640px) {
+        .wrap, .bar, .notice p { padding-left: 1.25rem; padding-right: 1.25rem; }
+        .nav { display: none; }
+        .away { font-size: var(--fp-size-micro); }
+        main { padding: 2.5rem 0; }
+        .tier, .tier.leader { padding: 1.25rem; }
+        .members, .rotation { padding-left: 0; }
+        .member, .member.spot { padding-left: 0; padding-right: 0; }
+        .leader .rate { font-size: 2.25rem; }
+        .shared i { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="bar wrap">
+        <span class="mark">FlipPeak</span>
+        <nav class="nav"><a href="#">Live Market</a><a href="#">Legends</a></nav>
+        <span class="away">Accounts open in Phase 2</span>
+      </div>
+    </header>
+
+    <div class="notice">
+      <p class="wrap"><strong>Development preview.</strong> The market below is fixture data used to build the interface. No campaigns are running and no money is moving.</p>
+    </div>
+
+    <main class="wrap">
+      <div class="live"><span class="dot"></span><h1>Live Market</h1></div>
+      <p class="lead">Your Time Rate determines your position. Budget determines how long you can hold it.</p>
+      <p class="opportunity">Join the top position at <span class="figure">$47/hour</span>. Become sole #1 at <span class="figure">$48/hour</span>. Campaigns at the same rate hold the same position; the highlighted one changes every 20 seconds.</p>
+
+      <ul class="chips">
+        <li class="on"><a href="#">Global</a></li>
+        <li><a href="#">Creators</a></li>
+        <li><a href="#">Music &amp; Artists</a></li>
+        <li><a href="#">Events</a></li>
+        <li><a href="#">Gaming</a></li>
+        <li><a href="#">Apps</a></li>
+        <li><a href="#">AI</a></li>
+        <li><a href="#">Tech</a></li>
+        <li><a href="#">Startups</a></li>
+      </ul>
+
+      <ol class="ladder">
+        <li class="tier leader">
+          <div class="head">
+            <span class="rank figure">1</span>
+            <p class="rate figure">$47/hour</p>
+          </div>
+          <ul class="members">
+            <li class="member solo">
+              <div class="line"><span class="name">Northwind Studio</span><span class="left figure">4h 12m left</span></div>
+              <p class="summary">Hand-drawn adventure game, out this winter</p>
+              <p class="taxonomy">Gaming<i>/</i>Indie Game</p>
+            </li>
+          </ul>
+        </li>
+
+        <li class="tier">
+          <div class="head">
+            <span class="rank figure">2</span>
+            <p class="rate figure">$32/hour</p>
+            <span class="shared">3 campaigns<i> share this position</i></span>
+          </div>
+          <ul class="members">
+            <li class="member spot">
+              <div class="line"><span class="name">Cadence Labs</span><span class="flag">In spotlight</span><span class="left figure">9h 40m left</span></div>
+              <p class="summary">Scheduling that reads your calendar, not your mind</p>
+              <p class="taxonomy">Apps</p>
+            </li>
+            <li class="member"><div class="line"><span class="name">Aria Field</span><span class="left figure">2h 05m left</span></div></li>
+            <li class="member"><div class="line"><span class="name">Postmark Weekly</span><span class="left figure">46m left</span></div></li>
+          </ul>
+        </li>
+
+        <li class="tier">
+          <div class="head">
+            <span class="rank figure">3</span>
+            <p class="rate figure">$24/hour</p>
+            <span class="shared">2 campaigns<i> share this position</i></span>
+          </div>
+          <ul class="members">
+            <li class="member spot">
+              <div class="line"><span class="name">Verity</span><span class="flag">In spotlight</span><span class="left figure">18h 30m left</span></div>
+              <p class="summary">Open-source evaluation harness for language models</p>
+              <p class="taxonomy">AI</p>
+            </li>
+            <li class="member"><div class="line"><span class="name">Halfmoon Festival</span><span class="left figure">6h 00m left</span></div></li>
+          </ul>
+        </li>
+
+        <li class="tier">
+          <div class="head">
+            <span class="rank figure">4</span>
+            <p class="rate figure">$18/hour</p>
+          </div>
+          <ul class="members">
+            <li class="member solo">
+              <div class="line"><span class="name">Tinbox</span><span class="left figure">7m left</span></div>
+              <p class="summary">Streaming build logs from a two-person hardware shop</p>
+              <p class="taxonomy">Creators<i>/</i>Streamer</p>
+            </li>
+          </ul>
+        </li>
+
+        <li class="tier">
+          <div class="head">
+            <span class="rank figure">5</span>
+            <p class="rate figure">$12/hour</p>
+            <span class="shared">2 campaigns<i> share this position</i></span>
+          </div>
+          <ul class="members">
+            <li class="member spot">
+              <div class="line"><span class="name">Meridian Type</span><span class="flag">In spotlight</span><span class="left figure">31h 15m left</span></div>
+              <p class="summary">A grotesque built for financial interfaces</p>
+              <p class="taxonomy">Other</p>
+            </li>
+            <li class="member"><div class="line"><span class="name">Calder Course</span><span class="left figure">3h 55m left</span></div></li>
+          </ul>
+        </li>
+      </ol>
+    </main>
+
+    <footer class="wrap" style="padding-bottom: 3.5rem">
+      <p>Ranking uses current rate only. Budget, spend, clicks and impressions have no effect on position.</p>
+    </footer>
+  </body>
+</html>

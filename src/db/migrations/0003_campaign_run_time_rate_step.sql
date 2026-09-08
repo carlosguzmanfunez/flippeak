@@ -1,0 +1,1 @@
+ALTER TABLE "campaign_run" ADD CONSTRAINT "campaign_run_time_rate_whole_dollars" CHECK ("campaign_run"."time_rate_cents_per_hour" % 100 = 0);

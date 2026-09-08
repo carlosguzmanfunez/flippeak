@@ -1,0 +1,59 @@
+@import 'tailwindcss';
+@import '../ui/tokens.css';
+
+@theme inline {
+  --color-canvas: var(--fp-background);
+  --color-surface: var(--fp-surface);
+  --color-raised: var(--fp-surface-raised);
+  --color-line: var(--fp-border);
+  --color-line-strong: var(--fp-border-strong);
+
+  --color-ink: var(--fp-text-primary);
+  --color-muted: var(--fp-text-secondary);
+  --color-faint: var(--fp-text-faint);
+
+  --color-accent: var(--fp-accent);
+  --color-accent-soft: var(--fp-accent-soft);
+  --color-leader: var(--fp-leader);
+  --color-success: var(--fp-success);
+  --color-warning: var(--fp-warning);
+  --color-danger: var(--fp-danger);
+
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--fp-background);
+    color: var(--fp-text-primary);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Money and rank figures align vertically down the ladder. */
+  .fp-figure {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--fp-accent-soft);
+    outline-offset: 3px;
+    border-radius: var(--fp-radius-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
