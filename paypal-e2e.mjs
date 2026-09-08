@@ -1,21 +1,21 @@
 // ============================================================
-// FlipPeak — PayPal Sandbox E2E (Phase 10-B)
+// FlipPeak â€” PayPal Sandbox E2E (Phase 10-B)
 //
 // Uso:
 //   node paypal-e2e.mjs create      # crea la orden (deja el approval link)
 //   node paypal-e2e.mjs capture     # captura server-side (webhook llega al deploy)
-//   node paypal-e2e.mjs verify      # verifica DB: funding exacto, CAPTURED, activación
+//   node paypal-e2e.mjs verify      # verifica DB: funding exacto, CAPTURED, activaciÃ³n
 //
-// REQUISITOS (en .env.local) — NUNCA en el chat:
+// REQUISITOS (en .env.local) â€” NUNCA en el chat:
 //   PAYPAL_ENVIRONMENT=sandbox  PAYPAL_CLIENT_ID=...  PAYPAL_CLIENT_SECRET=...
 //   DATABASE_URL=postgresql://...  (la misma de flippeak-dev, al alcance local)
 //
 // El webhook REAL solo se procesa si la URL del webhook de la app sandbox apunta
 // al deploy (https://flippeak.vercel.app/api/paypal/webhook) y Vercel tiene las
-// mismas credenciales + PAYPAL_WEBHOOK_ID. El crédito lo hace el webhook, no
-// este script: capture() no acredita (ADR-014 §6).
+// mismas credenciales + PAYPAL_WEBHOOK_ID. El crÃ©dito lo hace el webhook, no
+// este script: capture() no acredita (ADR-014 Â§6).
 //
-// Aprobación: el comprador sandbox debe abrir el approval link y aprobar
+// AprobaciÃ³n: el comprador sandbox debe abrir el approval link y aprobar
 // (login con cuenta de buyer sandbox). Ese paso no es automatizable.
 // ============================================================
 
@@ -25,7 +25,7 @@ import { neon } from '@neondatabase/serverless';
 
 // Load .env.local so the harness runs against the same local configuration the
 // app uses (node does not load dotfiles itself). Values stay in the process
-// environment only — nothing is ever printed.
+// environment only â€” nothing is ever printed.
 try {
   for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
     const match = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
@@ -38,8 +38,8 @@ try {
 }
 
 const STATE_FILE = '.paypal-e2e-state.json';
-const TEST_AMOUNT_CENTS = 10_000; // $10.00 — importe de prueba válido en Sandbox
-// (NO es una política comercial de FlipPeak: es un valor de prueba deliberado.)
+const TEST_AMOUNT_CENTS = 1_000; // $10.00 — importe de prueba válido en Sandbox
+// (NO es una polÃ­tica comercial de FlipPeak: es un valor de prueba deliberado.)
 
 const sql = neon(process.env.DATABASE_URL);
 const state = { orderId: null, run: null, paymentOrderId: null };
@@ -94,7 +94,7 @@ async function create() {
   request.prefer('return=representation');
   request.requestBody({
     intent: 'CAPTURE',
-    purchase_units: [{ reference_id: paymentOrderId, amount: { currency_code: 'USD', value: '10.00' } }],
+    purchase_units: [{ reference_id: paymentOrderId, amount: { currency_code: 'USD', value: (TEST_AMOUNT_CENTS / 100).toFixed(2) } }],
   });
   const response = await client.execute(request);
   const result = response.result;
@@ -109,7 +109,7 @@ async function create() {
   console.log('ORDER CREATED', JSON.stringify({ paymentOrderId, providerOrderId: result.id, run: run.id }));
   console.log('APPROVAL LINK (abre en navegador con cuenta compradora sandbox y aprueba):');
   console.log(approval);
-  console.log('Después ejecuta: node paypal-e2e.mjs capture');
+  console.log('DespuÃ©s ejecuta: node paypal-e2e.mjs capture');
 }
 
 async function snapshot() {
@@ -136,18 +136,18 @@ async function capture() {
   // Point 5: evidence the Capture API itself is NOT financial recognition.
   // Snapshot immediately: the state must show that FlipPeak has not credited
   // anything yet (webhook still pending). "PayPal reported" != "FlipPeak
-  // credited" — the internal payment_order CAPTURED state only happens inside
+  // credited" â€” the internal payment_order CAPTURED state only happens inside
   // the verified webhook transaction.
   const pre = await snapshot();
   console.log('PRE-WEBHOOK STATE (no recognized credit expected):', JSON.stringify(pre));
   console.log('CHECK pre: no paypal funding rows:', pre.paypalFundingRows === 0);
   console.log('CHECK pre: order NOT internally CAPTURED:', pre.orderState !== 'CAPTURED');
   console.log('CHECK pre: run not active by capture:', pre.runStatus !== 'ACTIVE');
-  console.log('Esperando webhook real… ejecuta: node paypal-e2e.mjs verify');
+  console.log('Esperando webhook realâ€¦ ejecuta: node paypal-e2e.mjs verify');
 }
 
 async function verify() {
-  // Point 4: tolerate the asynchronous webhook — poll with a deadline instead
+  // Point 4: tolerate the asynchronous webhook â€” poll with a deadline instead
   // of a single immediate query. No arbitrary sleeps as a fix.
   const DEADLINE_MS = 30_000;
   const INTERVAL_MS = 1_500;
@@ -161,15 +161,15 @@ async function verify() {
     const orderCaptured = last.orderState === 'CAPTURED' && last.captureId !== null;
     const runActivated = last.runStatus === 'ACTIVE';
     if (fundingExact && orderCaptured && runActivated) {
-      console.log('WEBHOOK RECONOCIDO — estado final:', JSON.stringify(last));
+      console.log('WEBHOOK RECONOCIDO â€” estado final:', JSON.stringify(last));
       await printEvidence();
-      console.log('E2E RESULT: PASSO — Create→approval→capture→webhook verificado→run_funding→crédito→activación');
+      console.log('E2E RESULT: PASSO â€” Createâ†’approvalâ†’captureâ†’webhook verificadoâ†’run_fundingâ†’crÃ©ditoâ†’activaciÃ³n');
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
   }
 
-  console.log('E2E TIMEOUT — el webhook no fue procesado en', DEADLINE_MS, 'ms. Último estado:', JSON.stringify(last));
+  console.log('E2E TIMEOUT â€” el webhook no fue procesado en', DEADLINE_MS, 'ms. Ãšltimo estado:', JSON.stringify(last));
   console.log('Posibles causas: webhook no configurado en la app, deploy sin creds, o eventos no suscritos.');
   await printEvidence();
   process.exit(2);
