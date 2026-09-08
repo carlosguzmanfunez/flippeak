@@ -5,17 +5,23 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { campaign, campaignRun, runFunding } from '@/db/schema';
 import { db } from '@/db/client';
 import { loadOwnedCampaign, loadOwnedPreviousRun, insertCampaignRun } from '@/lib/campaign-run-queries';
-import {
-  loadOwnedRunForFunding,
-  persistFunding,
-  activate,
-  readNowMsForFunding,
-} from '@/lib/funding-dependencies';
-import { settleAndMaterialize } from '@/lib/economic-service';
 import { activateRun, fundRun } from '@/modules/payments/funding';
 import type { FundingDependencies } from '@/modules/payments/funding';
 import { createRunAgain } from '@/modules/campaigns/create-campaign-run';
 import type { AuthenticatedPrincipal } from '@/modules/auth/principal';
+import type * as FundingDepsModule from '@/lib/funding-dependencies';
+
+/**
+ * The funding dependency bundle pulls in auth (betterAuth construction touches
+ * db()); loaded lazily so the offline suite never requires DATABASE_URL.
+ */
+let fundingDepsModule: FundingDepsModule | undefined;
+const getFundingDeps = async (): Promise<FundingDepsModule> => {
+  if (fundingDepsModule === undefined) {
+    fundingDepsModule = await import('@/lib/funding-dependencies');
+  }
+  return fundingDepsModule;
+};
 
 /**
  * Runtime lifecycle verification (provider = 'internal', audited test path).
@@ -27,8 +33,8 @@ import type { AuthenticatedPrincipal } from '@/modules/auth/principal';
  * product actions are ADMIN-gated and PayPal framing is still to come.
  *
  * Two phases, so the test is idempotent:
- *   phase 1 — finds the newest owned DRAFT and runs the full cycle on it;
- *   phase 2 — (when the phase-1 run is already EXHAUSTED, e.g. on re-run)
+ *   phase 1 â€” finds the newest owned DRAFT and runs the full cycle on it;
+ *   phase 2 â€” (when the phase-1 run is already EXHAUSTED, e.g. on re-run)
  *             verifies the exhaust was legitimate and executes the first-ever
  *             positive Run Again against it.
  *
@@ -46,15 +52,24 @@ const OWNER: AuthenticatedPrincipal = {
 const CENT_MS_PER_CENT = 3_600_000;
 const LIFE_RATE = 10_100; // $101/hour, the audited runtime campaign rate
 
-function fundingDepsForOwner(): FundingDependencies {
+async function fundingDepsForOwner(): Promise<FundingDependencies> {
+  const deps = await getFundingDeps();
   return {
     resolvePrincipal: async () => OWNER,
-    loadOwnedRun: loadOwnedRunForFunding,
-    persistFunding,
-    activate,
-    readNowMs: readNowMsForFunding,
+    loadOwnedRun: deps.loadOwnedRunForFunding,
+    persistFunding: deps.persistFunding,
+    activate: deps.activate,
+    readNowMs: deps.readNowMsForFunding,
   };
 }
+
+/** Lazy owner-scoped load; the funding module only loads when the cycle runs. */
+const ownedRun = (runId: string) =>
+  getFundingDeps().then((deps) => deps.loadOwnedRunForFunding(OWNER, runId));
+
+/** Lazy settle; the economic service module only loads when the cycle runs. */
+const settle = (runId: string) =>
+  import('@/lib/economic-service').then((module) => module.settleAndMaterialize(runId));
 
 const runAgainDeps = () => ({
   resolvePrincipal: async () => OWNER,
@@ -93,12 +108,12 @@ const newestOwnedExhaustedWithLedger = async (): Promise<string | null> => {
   return rows[0]?.id ?? null;
 };
 
-describe.skipIf(!CYCLE_ENABLED)('4D lifecycle — provider=internal, audited test path', () => {
+describe.skipIf(!CYCLE_ENABLED)('4D lifecycle â€” provider=internal, audited test path', () => {
   it(
-    'phase 1: DRAFT → ACTIVE → exhausted → EXHAUSTED, or phase 2: verified EXHAUSTED → Run Again',
+    'phase 1: DRAFT â†’ ACTIVE â†’ exhausted â†’ EXHAUSTED, or phase 2: verified EXHAUSTED â†’ Run Again',
     { timeout: 20_000 },
     async () => {
-      const deps = fundingDepsForOwner();
+      const deps = await fundingDepsForOwner();
       const priorExhausted = await newestOwnedExhaustedWithLedger();
 
       if (priorExhausted !== null) {
@@ -119,17 +134,17 @@ async function requireDraft(): Promise<string> {
 
 async function runFullCycle(deps: FundingDependencies, runId: string): Promise<void> {
   // 1. Verified funding: 1 cent is enough to demonstrate a legitimate
-  //    exhaustion in the test window (1 cent @ $101/h ≈ 356 ms).
+  //    exhaustion in the test window (1 cent @ $101/h â‰ˆ 356 ms).
   expect(await fundRun(deps, { runId, amountCents: 1 })).toEqual({ ok: true });
 
-  const afterFunding = await loadOwnedRunForFunding(OWNER, runId);
+  const afterFunding = await ownedRun(runId);
   expect(afterFunding?.creditedCents).toBe(1);
   expect(afterFunding?.verifiedFundingCents).toBe(1);
 
-  // 2. Activation: DRAFT → ACTIVE with an authoritative whole-ms anchor.
+  // 2. Activation: DRAFT â†’ ACTIVE with an authoritative whole-ms anchor.
   expect(await activateRun(deps, { runId })).toEqual({ ok: true });
 
-  const afterActivation = await loadOwnedRunForFunding(OWNER, runId);
+  const afterActivation = await ownedRun(runId);
   expect(afterActivation?.status).toBe('ACTIVE');
 
   const [anchorRow] = await db()
@@ -142,20 +157,20 @@ async function runFullCycle(deps: FundingDependencies, runId: string): Promise<v
 
   // 3. Wait past the exhaustion instant, then materialise (idempotent).
   await new Promise((resolve) => setTimeout(resolve, 700));
-  expect(await settleAndMaterialize(runId)).toEqual({ ok: true, runId });
+  expect(await settle(runId)).toEqual({ ok: true, runId });
 
-  const afterExhaustion = await loadOwnedRunForFunding(OWNER, runId);
+  const afterExhaustion = await ownedRun(runId);
   expect(afterExhaustion?.status).toBe('EXHAUSTED');
   expect(afterExhaustion?.consumedCentMs).toBe(CENT_MS_PER_CENT);
 
   // Idempotency: a second materialisation changes nothing.
-  expect(await settleAndMaterialize(runId)).toEqual({ ok: true, runId });
+  expect(await settle(runId)).toEqual({ ok: true, runId });
 
   await verifyAndRunAgain(deps, runId);
 }
 
 async function verifyAndRunAgain(deps: FundingDependencies, runId: string): Promise<void> {
-  const state = await loadOwnedRunForFunding(OWNER, runId);
+  const state = await ownedRun(runId);
   expect(state?.status).toBe('EXHAUSTED');
   expect(state?.consumedCentMs).toBe(CENT_MS_PER_CENT);
 
