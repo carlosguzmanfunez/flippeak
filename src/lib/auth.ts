@@ -28,9 +28,13 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL,
 
   // Read from configuration rather than hardcoded, so preview and production
-  // deployments each trust only their own origin.
+  // deployments each trust only their own origin. Vercel previews use unique
+  // `*.vercel.app` hostnames, so that wildcard is always trusted alongside
+  // local development.
   trustedOrigins: [
     process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+    'http://localhost:3000',
+    '*.vercel.app',
   ],
 
   database: drizzleAdapter(db(), {
