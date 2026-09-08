@@ -20,6 +20,47 @@ import type { WebhookFlowDeps, WebhookInput } from './paypal-process';
 const isUniqueViolation = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === '23505';
 
+/**
+ * Best-effort activation after a capture (ADR-014 §6): money and activation
+ * are separate. Conditional UPDATE with an atomic NOT EXISTS — zero affected
+ * rows mean blocked (another ACTIVE in the campaign, or the run not DRAFT),
+ * and the money stays credited. A true concurrent race can still surface a
+ * unique violation; that is swallowed here because the payment is already
+ * committed — the run simply remains a funded DRAFT.
+ */
+async function activateAfterCredit(orderId: string): Promise<boolean> {
+  try {
+    const nowMs = await readNowMsForFunding();
+    const updated = await db()
+      .update(campaignRun)
+      .set({ status: 'ACTIVE', rateAnchorAt: new Date(nowMs) })
+      .where(
+        and(
+          eq(
+            campaignRun.id,
+            sql`(select run_id from ${paymentOrder} where id = ${orderId})`,
+          ),
+          eq(campaignRun.status, 'DRAFT'),
+          sql`not exists (
+            select 1 from ${campaignRun} sibling
+            where sibling.campaign_id = (select campaign_id from ${campaignRun} self where self.id = ${campaignRun.id})
+              and sibling.status = 'ACTIVE'
+          )`,
+        ),
+      );
+    const count = updated.rowCount ?? 0;
+    return count > 0;
+  } catch (error) {
+    if (isUniqueViolation(error)) return false;
+    throw error;
+  }
+}
+
+async function readNowMsForFunding(): Promise<number> {
+  const rows = await db().select({ nowMs: ECONOMIC_NOW_MS }).from(campaignRun).limit(1);
+  return Number(rows[0]?.nowMs ?? 0);
+}
+
 export const paypalWebhookDeps: WebhookFlowDeps = {
   async insertEventIfAbsent(input: WebhookInput): Promise<boolean> {
     try {
@@ -93,22 +134,20 @@ export const paypalWebhookDeps: WebhookFlowDeps = {
 
   async creditAndActivate({ orderId, captureId, amountCents }) {
     try {
-      return await db().transaction(async (tx) => {
-        const [nowRow] = await tx
-          .select({ nowMs: ECONOMIC_NOW_MS })
-          .from(paymentOrder)
-          .where(eq(paymentOrder.id, orderId))
-          .limit(1);
-        const nowMs = Number(nowRow?.nowMs ?? 0);
-
+      // The MONEY transaction: ledger row + credited_cents + order CAPTURED.
+      // Activation is deliberately NOT inside it (ADR-014 §6): a failed or
+      // blocked activation (one-ACTIVE per campaign) must never abort a
+      // payment that PayPal already captured. It runs after this commit as a
+      // best-effort conditional update.
+      await db().transaction(async (tx) => {
         const rows = await tx
-          .select({ id: paymentOrder.id, runId: paymentOrder.runId, state: paymentOrder.state })
+          .select({ id: paymentOrder.id, runId: paymentOrder.runId })
           .from(paymentOrder)
           .where(eq(paymentOrder.id, orderId))
           .for('update')
           .limit(1);
         const order = rows[0];
-        if (order === undefined) return 'CAPTURE_EXISTS' as const;
+        if (order === undefined) throw new Error('ordering row missing');
 
         // The ledger key is the CAPTURE id (finance-level authority), so the
         // same capture can never credit twice even with distinct event ids.
@@ -126,33 +165,17 @@ export const paypalWebhookDeps: WebhookFlowDeps = {
           .set({ creditedCents: sql`${campaignRun.creditedCents} + ${amountCents}` })
           .where(and(eq(campaignRun.id, order.runId), ne(campaignRun.status, 'EXHAUSTED')));
 
-        const [runRow] = await tx
-          .select({ status: campaignRun.status })
-          .from(campaignRun)
-          .where(eq(campaignRun.id, order.runId));
-        let activated = false;
-        if (runRow?.status === 'DRAFT') {
-          try {
-            await tx
-              .update(campaignRun)
-              .set({ status: 'ACTIVE', rateAnchorAt: new Date(nowMs) })
-              .where(and(eq(campaignRun.id, order.runId), eq(campaignRun.status, 'DRAFT')));
-            activated = true;
-          } catch (error) {
-            // One-ACTIVE per campaign: credit stays, activation waits (the
-            // run remains a funded DRAFT that can be activated.
-            if (!isUniqueViolation(error)) throw error;
-            activated = false;
-          }
-        }
-
         await tx
           .update(paymentOrder)
           .set({ state: 'CAPTURED', providerCaptureId: captureId })
           .where(eq(paymentOrder.id, order.id));
-
-        return activated ? 'CREDITED' : 'NO_ACTIVATION';
       });
+
+      // Activation is a separate unit of work: conditional (DRAFT AND no
+      // sibling ACTIVE) and best-effort. Zero rows means blocked — the credit
+      // stays as the referenced run's funded DRAFT.
+      const activated = await activateAfterCredit(orderId);
+      return activated ? 'CREDITED' : 'NO_ACTIVATION';
     } catch (error) {
       if (isUniqueViolation(error)) return 'CAPTURE_EXISTS' as const;
       throw error;
