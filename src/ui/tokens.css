@@ -44,4 +44,15 @@
   --fp-radius-md: 8px;
   --fp-radius-lg: 14px;
   --fp-rail: 3px;
+  --fp-focus-ring: 2px solid #6d5df6;
+
+  /* --- space scale (4pt rhythm) --------------------------------------- */
+  --fp-space-1: 4px;
+  --fp-space-2: 8px;
+  --fp-space-3: 12px;
+  --fp-space-4: 16px;
+  --fp-space-6: 24px;
+  --fp-space-8: 32px;
+  --fp-space-12: 48px;
+  --fp-space-16: 64px;
 }

@@ -36,6 +36,7 @@ export async function POST(request: Request): Promise<Response> {
     verified = false;
   }
   if (!verified) {
+    console.error('flippeak:webhook:signature_rejected');
     return NextResponse.json({ error: 'unverified' }, { status: 401 });
   }
 
@@ -55,6 +56,10 @@ export async function POST(request: Request): Promise<Response> {
     eventType: event.event_type,
     resource: event.resource,
   });
+
+  if (!outcome.ok) {
+    console.error('flippeak:webhook:processing_failure', { eventType: event.event_type, reason: outcome.reason });
+  }
 
   // Definitive verdict (including rejections) acknowledged: provider retries
   // of the same event id are absorbed by the level-1 UNIQUE (ADR-014).

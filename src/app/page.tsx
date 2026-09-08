@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { CATEGORIES, CATEGORY_LABELS, type CategoryId } from '@/config/domain-config';
 import { SiteHeader } from '@/ui/shell/site-header';
 import { LiveMarket } from '@/ui/market/live-market';
@@ -48,6 +50,23 @@ export default async function LiveMarketPage({
     <>
       <SiteHeader />
       <main>
+        <section className="mx-auto max-w-5xl px-5 pb-2 pt-16 sm:px-8 sm:pt-20">
+          <h2 className="max-w-[24ch] text-[2rem] font-semibold leading-tight tracking-tight text-ink sm:text-[2.5rem]">
+            Advertising time, competed for live.
+          </h2>
+          <p className="mt-4 max-w-[54ch] text-[1.0625rem] leading-relaxed text-muted">
+            Set your Time Rate. Compete for position. Budget determines how long you can hold it —
+            the market does the rest.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/my-campaigns"
+              className="inline-block rounded-lg bg-accent px-5 py-2.5 text-[0.9375rem] font-medium text-white transition-opacity hover:opacity-90"
+            >
+              Start competing
+            </Link>
+          </div>
+        </section>
         <LiveMarket
           entries={entries}
           serverNowMs={serverNowMs}

@@ -38,6 +38,19 @@ export async function activateRunAction(formData: FormData) {
   });
 }
 
+/**
+ * Advertiser-facing activation (Phase 14): the OWNER may activate a funded run.
+ * The internal `fundRunAction` stays ADMIN-gated (test provider), but activation
+ * of a legitimately PayPal-funded DRAFT is a product path: the orchestration
+ * re-resolves the principal (owner scoping) and requires verified funding
+ * covering the credit before it accepts.
+ */
+export async function activateOwnedRunAction(formData: FormData) {
+  return activateRun(fundingDependencies, {
+    runId: formData.get('runId'),
+  });
+}
+
 async function requireAdmin(): Promise<void> {
   const principal = await getAuthenticatedPrincipal();
   if (principal === null || principal.role !== 'ADMIN') {

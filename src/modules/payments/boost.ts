@@ -112,6 +112,7 @@ export async function boostRunAction(
     return { ok: false, reason: outcome.reason };
   } catch {
     // No constraint/SQL detail crosses the server boundary.
+    console.error('flippeak:boost:unexpected');
     return { ok: false, reason: 'UNEXPECTED' };
   }
 }

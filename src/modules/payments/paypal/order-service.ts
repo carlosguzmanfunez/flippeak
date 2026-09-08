@@ -97,8 +97,10 @@ export async function createCheckoutOrder(
     };
   } catch (error) {
     if (error instanceof Error && error.message === 'provider not configured') {
+      console.error('flippeak:checkout:provider_not_configured');
       return { ok: false, reason: 'PROVIDER_NOT_CONFIGURED' };
     }
+    console.error('flippeak:checkout:create_unexpected');
     return { ok: false, reason: 'UNEXPECTED' };
   }
 }
