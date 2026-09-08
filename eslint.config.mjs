@@ -7,7 +7,15 @@ import next from '@next/eslint-plugin-next';
 
 export default tseslint.config(
   {
-    ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts', 'src/db/migrations/**'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'next-env.d.ts',
+      'src/db/migrations/**',
+      // Historical Phase 3F standalone verification scripts (standalone Node
+      // utilities, not application code; Node globals are out of scope here).
+      '3f4-*.mjs',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
