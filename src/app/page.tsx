@@ -2,7 +2,7 @@ import { CATEGORIES, CATEGORY_LABELS, type CategoryId } from '@/config/domain-co
 import { SiteHeader } from '@/ui/shell/site-header';
 import { LiveMarket } from '@/ui/market/live-market';
 import type { MarketEntry } from '@/ui/market/types';
-import { listLiveMarketRuns } from '@/lib/live-market-queries';
+import { authoritativeServerNowMs, listLiveMarketRuns } from '@/lib/live-market-queries';
 
 /**
  * Live Market home (Phase 11).
@@ -40,13 +40,17 @@ export default async function LiveMarketPage({
       remainingRuntimeMs: Math.floor(Number(run.remainingCentMs) / run.timeRateCentsPerHour),
     }));
 
+  // Spotlight authority: PostgreSQL now(), floored (ADR-012 §13/§32). The
+  // browser only interpolates from this one synchronisation point.
+  const serverNowMs = await authoritativeServerNowMs();
+
   return (
     <>
       <SiteHeader />
       <main>
         <LiveMarket
           entries={entries}
-          serverNowMs={Date.now()}
+          serverNowMs={serverNowMs}
           activeCategory={activeCategory}
         />
       </main>

@@ -2,7 +2,17 @@ import { desc } from 'drizzle-orm';
 
 import { campaignRun } from '@/db/campaign-schema';
 import { db } from '@/db/client';
-import { ECONOMIC_REMAINING_CENT_MS, economicallyEligibleWhere } from '@/db/economic-state';
+import { ECONOMIC_NOW_MS, ECONOMIC_REMAINING_CENT_MS, economicallyEligibleWhere } from '@/db/economic-state';
+
+/**
+ * Authoritative presentational clock for the spotlight rotation (§13/§32):
+ * PostgreSQL `now()` floored to whole ms. The browser receives only this
+ * offset and interpolates; it never is the authority.
+ */
+export async function authoritativeServerNowMs(): Promise<number> {
+  const rows = await db().select({ nowMs: ECONOMIC_NOW_MS }).from(campaignRun).limit(1);
+  return Number(rows[0]?.nowMs ?? Date.now());
+}
 
 /**
  * Live Market query (Phase 11, master prompt 31-33, 38; ADR-005/012).

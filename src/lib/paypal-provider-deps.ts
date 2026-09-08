@@ -17,8 +17,18 @@ import type { WebhookFlowDeps, WebhookInput } from './paypal-process';
  * order's update and inside the funding provider_event_id key.
  */
 
-const isUniqueViolation = (error: unknown): boolean =>
-  typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === '23505';
+function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  // The Neon serverless (HTTP) driver wraps postgres.js errors: the code can
+  // sit at the top level, inside error.cause, or survive only in the message.
+  const candidate = error as { code?: unknown; cause?: unknown; message?: unknown };
+  if (candidate.code === '23505') return true;
+  if (typeof candidate.cause === 'object' && candidate.cause !== null) {
+    const cause = candidate.cause as { code?: unknown };
+    if (cause.code === '23505') return true;
+  }
+  return typeof candidate.message === 'string' && candidate.message.includes('duplicate key value violates unique constraint');
+}
 
 /**
  * Best-effort activation after a capture (ADR-014 §6): money and activation
