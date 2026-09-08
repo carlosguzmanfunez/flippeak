@@ -65,6 +65,25 @@ describe('processVerifiedEvent — level-1 idempotency', () => {
     }
   });
 
+  it('a NON-TERMINAL repeat whose capture is ALREADY credited resolves CAPTURE_DUPLICATE (no credit)', async () => {
+    // Closure case (audit C+D): same event id re-enters (PENDING_RETRY after
+    // the old bug), the local order already carries the capture id. The plan
+    // must yield CAPTURE_DUPLICATE and never touch the money path.
+    const deps = makeDeps(
+      {
+        insertEventIfAbsent: vi.fn().mockResolvedValue(false),
+        loadEventState: vi.fn().mockResolvedValue('PENDING_RETRY' as const),
+      },
+      localOrder({ state: 'CAPTURED', providerCaptureId: 'cap-1' }),
+    );
+    expect(await processVerifiedEvent(deps, captureCompleted)).toEqual({
+      ok: true,
+      action: 'CAPTURE_DUPLICATE',
+    });
+    expect(deps.creditAndActivate).not.toHaveBeenCalled();
+    expect(deps.recordVerdict).toHaveBeenCalledWith('evt-cap-1', 'DUPLICATE_CAPTURE');
+  });
+
   it('rejects unparseable events before any write', async () => {
     const deps = makeDeps();
     expect(await processVerifiedEvent(deps, { ...captureCompleted, eventType: '' })).toEqual({
