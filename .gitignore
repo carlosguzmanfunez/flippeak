@@ -12,7 +12,7 @@ next-env.d.ts
 # testing
 coverage/
 
-# environment â€” never commit real secrets
+# environment Ã¢â‚¬â€ never commit real secrets
 .env
 .env.*
 !.env.example
@@ -38,3 +38,9 @@ yarn-error.log*
 .vercel
 .env*
 .paypal-e2e-state.json
+
+# UI e2e harness artifacts
+ui-e2e-*.png
+qa-probe.png
+ui-e2e-storage.json
+.ui-e2e-state.json
