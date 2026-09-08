@@ -116,3 +116,6 @@ export const fundingDependencies: FundingDependencies = {
   activate,
   readNowMs: readNowMsForFunding,
 };
+
+/** Shape of the bundle, exported for lazy dynamic imports (e.g. integration tests). */
+export type FundingDepsBundle = typeof fundingDependencies;
