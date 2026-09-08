@@ -19,8 +19,12 @@ export function CheckoutControl({ runId }: { readonly runId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  // TECHNICAL_AMOUNT_DOMAIN (ADR-014 exactness ceiling, not a commercial
+  // policy): any whole-dollar amount above $0.01 up to the exact-number roof.
+  // COMMERCIAL_BUDGET_POLICY (minimum/maximum/granularity) is deliberately NOT
+  // applied — HUMAN PRODUCT DECISION REQUIRED.
   const dollars = Number.parseFloat(amount);
-  const technicallyValid = Number.isFinite(dollars) && dollars > 0 && dollars <= 2501999792 / 100;
+  const technicallyValid = Number.isFinite(dollars) && dollars > 0 && dollars <= MAX_DOMAIN_DOLLARS;
 
   async function handleStart(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,6 +85,9 @@ function input(name: string, value: string): HTMLInputElement {
   element.hidden = true;
   return element;
 }
+
+/** Exactness ceiling in dollars: floor((2^53 - 1) / 3_600_000) / 100. */
+const MAX_DOMAIN_DOLLARS = 2_501_999_792 / 100;
 
 function messageFor(
   outcome: Awaited<ReturnType<typeof createCheckoutOrderAction>>,

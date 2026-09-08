@@ -95,7 +95,10 @@ export default async function CampaignRunsPage({ params }: { params: Promise<{ i
                           <PaymentStatus
                             orderId={latestPayment.orderId}
                             runId={run.id}
-                            canActivate={false}
+                            // Server-reflected: a DRAFT with a CAPTURED payment
+                            // is either already-active or awaiting our
+                            // owner-gated activation (webhook may have landed).
+                            canActivate={latestPayment.state === 'CAPTURED'}
                           />
                         )
                       ) : null}
