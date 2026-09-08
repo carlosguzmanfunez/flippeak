@@ -58,8 +58,8 @@ state               text NOT NULL DEFAULT 'PENDING'
                     CHECK (state IN ('PENDING','APPROVED','CAPTURED','ABANDONED','REFUNDED'))
 amount_cents        bigint NOT NULL
                     CHECK (amount_cents > 0)
-                    CHECK (amount_cents <= 2501999793)      -- techo matemático exacto (ADR-011),
-                                                            -- NO política comercial
+                    CHECK (amount_cents <= 2501999792)      -- ver deducción en §9: SOLO techo
+                                                            -- matemático, NUNCA política comercial
 currency            text NOT NULL DEFAULT 'USD' CHECK (currency = 'USD')
 provider            text NOT NULL DEFAULT 'paypal'
 provider_order_id   text      -- Order ID de PayPal
@@ -108,29 +108,38 @@ verificado — sin procesarlo).
 ## 4. State machine de la orden
 
 ```
-                    +------------------+ (provisión user)
-                    |  PENDING         |  ← creada por el owner con un amount + run
-                    +--------+---------+
-              approve (order) |           |  timeout del proveedor (24 h PayPal; configurable)
-              v               |           v
-     +------------+        +------------+
-     |  APPROVED  |        | ABANDONED  |     ← no capturada dentro del lifetime del provider.
-     +-----+------+        +------------+       ABANDONED es terminal para crédito.
-           |
-           | server-side capture (API retorno)  + webhook verificado CAPTURE.COMPLETED
-           v
-     +------------+  (refund verificado, futuro)
-     |  CAPTURED  | ───────────────────────────→ REFUNDED   [fuera del alcance del Paso 10:
-     +------------+                                          modelado, no implementado]
+                        +------------------+ (provisión user)
+                        |  PENDING         |  ← creada por el owner con un amount + run
+                        +--------+---------+
+                  approve (order) |           |  timeout del provider (24 h PayPal; configurable)
+                  v               |           v
+         +------------+        +------------+
+         |  APPROVED  |        | ABANDONED  |     ← estado de NUESTRA intención de checkout
+         +-----+------+        +------------+       (no capturada a tiempo). NO es un cierre
+               |                                     financiero.
+               | server-side capture (API retorno)  + webhook verificado CAPTURE.COMPLETED
+               v
+         +------------+  (refund verificado, futuro)
+         |  CAPTURED  | ───────────────────────────→ REFUNDED   [fuera del alcance del Paso 10:
+         +------------+                                          modelado, no implementado]
 ```
 
-Transiciones aplicadas hasta ser idempotentes: `APPROVED` puede llegar por webhook
-`CHECKOUT.ORDER.APPROVED`; el crédito SOLO en `CAPTURED` vía webhook `PAYMENT.CAPTURE.COMPLETED`
-verificado. Eventos fuera de secuencia (p. ej. capture sin order aprobada en nuestra DB — posible
-si el webhook de aprobación se perdió/retrasó): la máquina los **acepta si la orden existe y no
-está ABANDONED** — el estado de la orden es nuestra fuente, no el orden de llegada; si la orden
-no existe o está ABANDONED → evento marcado `OUT_OF_ORDER`/`REJECTED`, sin crédito, y queda
-registrado para investigación.
+**Principio de soberanía de la captura (ajuste de la revisión):**
+
+> **Un estado local de checkout NUNCA puede invalidar por sí mismo una captura
+> `COMPLETED` auténtica y verificada.**
+
+Consecuencias:
+- La transición `ABANDONED → CAPTURED` es **válida** en cuanto un webhook `CAPTURE.COMPLETED`
+  verificado porta la captura; "abandonada" describe la intención, no el dinero.
+- Una captura de una orden local inexistente (webhook perdido/creación no registrada): no se
+  descarta — se persiste como evento `ORPHAN_CAPTURE` (con su payload verificado) y se marca para
+  **reconciliación** (notificación/investigación). Nunca desaparece económicamente.
+- Eventos fuera de orden (`capture` sin `order.approved` previo): la máquina **acepta** si la
+  orden existe (el estado local no es el juicio — el capture verificado sí); con orden inexistente
+  → `ORPHAN_CAPTURE` (reconciliación), no `REJECTED` a secas.
+- `REJECTED` queda reservado para: firma no verificada, mismatch amount/currency, evento con
+  datos inconsistentes — nunca para "nuestra orden estaba ABANDONED".
 
 ---
 
@@ -212,7 +221,7 @@ BEGIN
 |---|---|---|
 | R1 | 2 webhooks, 2 event_ids, misma captura | UNIQUE captura + FOR UPDATE en nivel 2 → el 2º se marca DUPLICATE_CAPTURE, sin crédito |
 | R2 | Retorno browser vs webhook | El retorno solo consulta (server-side GET informativo); nunca acredita; el webhook único |
-| R3 | El run se agota (settlement) mientras el usuario estaba en PayPal | La captura acredita igualmente al run (recarga de un run EXHAUSTED: **decisión abierta §11** — no se inventa: documento registra dos caminos candidatos: refund o crédito-a-run-exhausted con política futura; **NO se decide aquí**) |
+| R3 | El run se agota (settlement) mientras el usuario estaba en PayPal | La captura acredita igualmente al run (recarga de un run EXHAUSTED: **decisión abierta §11** — no se inventa: dos caminos candidatos: refund o crédito-a-run-exhausted con política futura; **NO se decide aquí**). El dinero jamás se descarta: queda registrado en el ledger/|evento como legítimo |
 | R4 | Captura concurrente con activación de otro run (one-ACTIVE) | Índice parcial → la activación del evento falla → acreditación queda; estado `CAPTURED_NO_ACTIVATION`; run DRAFT fundado (activable) |
 | R5 | 2 órdenes capturadas del mismo run en paralelo | Ambas acreditan (suma); activación idempotente/no-duplicada (solo DRAFT→ACTIVE una vez) |
 | R6 | Mantenimiento de materialización EXHAUSTED mientras captura | Locks de ficha: la captura espera; luego chequea status DRAFT vs EXHAUSTED — decide por §8 R3 |
@@ -222,8 +231,27 @@ BEGIN
 
 ## 9. Amount y currency — validación técnica (SIN inventar política)
 
-- **Representación:** entero seguro, `amount_cents > 0`; dominio exacto `≤ 2_501_999_793 cents`
-  (techo matemático ADR-011 — no comercial: se hereda, no se propone).
+- **Representación:** entero seguro, `amount_cents > 0`; dominio exacto
+  `≤ 2_501_999_792 cents` ($25.019.997,92) — **techo MATEMÁTICO, no política comercial**.
+  La demostración (se registra en ADR-014):
+
+  ```
+  MAX_SAFE = 2^53 − 1 = 9.007.199.254.740.991
+  MAX_CREDIT_CENTS = ⌊MAX_SAFE / 3.600.000⌋ = 2.501.999.792
+
+  Con credited ≤ MAX_CREDIT_CENTS:
+    capacity   = credited × 3.600.000        ≤ 9.007.199.251.200.000 ≤ MAX_SAFE     (margen +3.540.991)
+    rate × msToExhaust                        ≤ déficit + rate
+                                                ≤ 9.007.199.251.300.000 ≤ MAX_SAFE  (margen +3.440.991,
+                                                                           rate ≤ 100.000)
+  → TODA la aritmética del motor (consumidos, déficits, proyecciones) permanece en
+    enteros exactos. El techo lo impone la representación numérica JS `number`
+    (ADR-010/011), con el mismo valor que el guard runtime MAX_CREDIT_CENTS de
+    src/modules/payments/funding.ts (⌊MAX_SAFE / 3.600.000⌋, que comprueba el mismo número).
+
+  Expresarlo como "$25M" en discusión comercial es un error de categoría: es un
+  límite de representación, no un Budget máximo. La política de producto
+  (mínimo/máximo comercial) sigue explícitamente SIN DEFINIR (§11).
 - **Validación de concordancia:** el webhook debe reportar `amount == amount_cents` y
   `currency == 'USD'` con la orden; mismatch → evento `REJECTED` (detalle breve) + estado ORDER
   → `FAILED`... (FAILED no está en la máquina; se usa `ABANDONED`+evento REJECTED documentado).
@@ -245,7 +273,9 @@ I5. La activación nunca ocurre sin crédito verificado (regla de 4D intacta).
 I6. `rate_anchor_at` solo se escribe con `floor(now())` de PostgreSQL (ADR-013).
 I7. El retorno del navegador nunca escribe el ledger.
 I8. Sin webhook verificado → sin crédito (excepción: provider `internal` ADMIN-gated, test only).
-I9. El estado de la orden nunca vuelve atrás (PENDING→APPROVED→CAPTURED→[REFUNDED]; ABANDONED terminal).
+I9. El estado de la orden avanza con evidencia autoritativa: `ABANDONED` es de intención y una
+      captura COMPLETED verificada siempre puede producir la transición `ABANDONED → CAPTURED`;
+      `REJECTED` nunca aplica a dinero capturado verificado (solo a firma/datos inválidos).
 I10. `payment_event.payload` nunca contiene credenciales.
 I11. Ownership: ninguna tabla financiera expone owner al cliente.
 I12. En la acreditación y la activación dentro del webhook: si la activación no procede

@@ -43,6 +43,13 @@
                         "when":  1788849024602,
                         "tag":  "0005_run_funding_ledger",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  6,
+                        "version":  "7",
+                        "when":  1788852838026,
+                        "tag":  "0006_payment_foundation",
+                        "breakpoints":  true
                     }
                 ]
 }

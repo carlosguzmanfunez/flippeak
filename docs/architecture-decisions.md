@@ -236,3 +236,30 @@ fails only at the boundary where a fractional duration is reduced.
 else, so the reduction is the caller's responsibility and must be identical in
 the SQL that computes eligibility. Both sides implement the same floor, and both
 are checked by the same suite.
+## ADR-014 — PayPal funding: two-level idempotency and capture sovereignty
+
+**Decision.** Verified webhook events are the only financial authority. A Capture ID
+accredits exactly once no matter how many distinct events refer to it; a Webhook Event ID
+is processed at most once; the browser return never credits. The order's local checkout
+state can never dismiss a genuine COMPLETED capture.
+
+Two constraints are the guarantee:
+
+| Level | UNIQUE | What it prevents |
+|---|---|---|
+| Event | `(provider, provider_event_id)` on `payment_event` | replay of the same delivery |
+| Capture | `(provider, provider_capture_id)` on `payment_order` | two different events crediting the same capture |
+
+**Capture sovereignty.** A local order marked ABANDONED is a statement of intent, not of
+money; `ABANDONED → CAPTURED` is a valid transition on a verified capture. An orphan
+capture (no local order) is persisted for reconciliation, never discarded.
+
+**Exactness ceiling (representation, not policy).** With `MAX_SAFE = 2^53 - 1` and the
+modelled unit `1 cent = 3,600,000 cent-ms`:
+
+`MAX_CREDIT_CENTS = floor(MAX_SAFE / 3_600_000) = 2_501_999_792` (`,019,997.92`)
+
+so capacity `<= 9.007.199.251.200.000 <= MAX_SAFE` and `rate x ceil(deficit/rate) <=
+deficit + rate <= 9.007.199.251.300.000 <= MAX_SAFE` for every `rate <= 100_000`: all
+engine arithmetic stays exact. This is a numeric representation limit only; the commercial
+budget minimum/maximum stays deliberately undecided.
