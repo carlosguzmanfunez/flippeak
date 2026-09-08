@@ -12,9 +12,14 @@ import { captureCheckoutOrder, createCheckoutOrder } from '@/modules/payments/pa
  */
 
 export async function createCheckoutOrderAction(formData: FormData) {
+  // FormData delivers strings: convert only digit-safe amounts; anything else
+  // reaches the orchestration unparsed and is rejected (INVALID_AMOUNT).
+  const rawAmount = formData.get('amountCents');
+  const amountCents =
+    typeof rawAmount === 'string' && /^\d+$/.test(rawAmount) ? Number(rawAmount) : rawAmount;
   return createCheckoutOrder(checkoutDependencies, {
     runId: formData.get('runId'),
-    amountCents: formData.get('amountCents'),
+    amountCents,
   });
 }
 
