@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { CATEGORIES, CATEGORY_LABELS, type CategoryId } from '@/config/domain-config';
@@ -15,6 +16,10 @@ import { authoritativeServerNowMs, listLiveMarketRuns } from '@/lib/live-market-
  * ADR-012 condition; ranking stays a pure function of Time Rate (ADR-005).
  */
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 function isCategoryId(value: string | undefined): value is CategoryId {
   return value !== undefined && (CATEGORIES as readonly string[]).includes(value);
