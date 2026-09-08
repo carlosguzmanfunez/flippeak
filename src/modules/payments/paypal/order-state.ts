@@ -52,10 +52,18 @@ export function parseProviderEvent(eventType: unknown, resource: unknown): Parse
     case 'PAYMENT.CAPTURE.COMPLETED': {
       const { id, amount, currencyCode } = asResource(resource);
       if (id === null) return 'MISSING_EVENT_ID';
+      let relatedOrderId: string | null = null;
+      if (typeof resource === 'object' && resource !== null) {
+        const supplementary = (resource as Record<string, unknown>).supplementary_data as
+          | Record<string, unknown>
+          | undefined;
+        const relatedIds = supplementary?.related_ids as Record<string, unknown> | undefined;
+        if (typeof relatedIds?.order_id === 'string') relatedOrderId = relatedIds.order_id;
+      }
       return {
         kind: 'CAPTURE_COMPLETED',
         providerEventId: null,
-        providerOrderId: null,
+        providerOrderId: relatedOrderId,
         providerCaptureId: id,
         amountCents: Number.isSafeInteger(amount) ? amount : null,
         currency: typeof currencyCode === 'string' ? currencyCode : null,

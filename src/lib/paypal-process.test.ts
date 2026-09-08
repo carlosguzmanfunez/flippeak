@@ -29,6 +29,7 @@ const localOrder = (overrides: Partial<Awaited<ReturnType<WebhookFlowDeps['loadO
 
 const makeDeps = (overrides: Partial<WebhookFlowDeps> = {}, orderValue: unknown = localOrder()): WebhookFlowDeps => ({
   insertEventIfAbsent: vi.fn().mockResolvedValue(true),
+  loadEventState: vi.fn().mockResolvedValue(null),
   loadOrder: vi.fn().mockResolvedValue(orderValue),
   markApproved: vi.fn().mockResolvedValue(undefined),
   creditAndActivate: vi.fn().mockResolvedValue('CREDITED'),
@@ -38,13 +39,30 @@ const makeDeps = (overrides: Partial<WebhookFlowDeps> = {}, orderValue: unknown 
 });
 
 describe('processVerifiedEvent — level-1 idempotency', () => {
-  it('skips an already processed event without touching money', async () => {
-    const deps = makeDeps({ insertEventIfAbsent: vi.fn().mockResolvedValue(false) });
+  it('skips a repeat of a TERMINAL verdict without touching money', async () => {
+    const deps = makeDeps({
+      insertEventIfAbsent: vi.fn().mockResolvedValue(false),
+      loadEventState: vi.fn().mockResolvedValue('PROCESSED' as const),
+    });
     expect(await processVerifiedEvent(deps, captureCompleted)).toEqual({
       ok: true,
       action: 'EVENT_ALREADY_PROCESSED',
     });
     expect(deps.creditAndActivate).not.toHaveBeenCalled();
+  });
+
+  it('re-enters a repeat of a NON-TERMINAL verdict (orphan/pending retry) with level-2 safety', async () => {
+    for (const state of ['ORPHAN_CAPTURE', 'PENDING_RETRY'] as const) {
+      const deps = makeDeps({
+        insertEventIfAbsent: vi.fn().mockResolvedValue(false),
+        loadEventState: vi.fn().mockResolvedValue(state),
+      });
+      expect(await processVerifiedEvent(deps, captureCompleted)).toEqual({
+        ok: true,
+        action: 'CREDIT_AND_CAPTURE',
+      });
+      expect(deps.creditAndActivate).toHaveBeenCalledTimes(1);
+    }
   });
 
   it('rejects unparseable events before any write', async () => {

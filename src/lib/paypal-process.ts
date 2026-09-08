@@ -38,6 +38,10 @@ export type WebhookFlowDeps = {
    * (provider, provider_event_id) already exists.
    */
   readonly insertEventIfAbsent: (input: WebhookInput) => Promise<boolean>;
+  /** Current processing state of an existing event (null when absent). */
+  readonly loadEventState: (eventId: string) => Promise<
+    'PENDING_RETRY' | 'PROCESSED' | 'DUPLICATE_CAPTURE' | 'ORPHAN_CAPTURE' | 'NO_ACTIVATION' | 'REJECTED' | null
+  >;
   /**
    * Local order by capture id first, then by order id (ADR-014).
    * Receives the ALREADY PARSED event so the normalized ids are the single
@@ -74,6 +78,15 @@ export type WebhookFlowDeps = {
   ) => Promise<void>;
 };
 
+/**
+ * A verdict is terminal when it cannot change (already credited/duplicated or
+ * a rejecting fact). Non-terminal verdicts (a transient out-of-order or an
+ * orphan capture that later becomes reconciliable) stay RE-ELIGIBLE: a
+ * provider resend of the SAME event id re-enters the flow instead of being
+ * skipped, and the idempotency levels keep the money safe.
+ */
+const TERMINAL_VERDICTS = new Set(['PROCESSED', 'DUPLICATE_CAPTURE', 'REJECTED', 'NO_ACTIVATION']);
+
 export async function processVerifiedEvent(
   deps: WebhookFlowDeps,
   input: WebhookInput,
@@ -83,7 +96,15 @@ export async function processVerifiedEvent(
   if (parsed === 'MISSING_EVENT_ID') return { ok: false, reason: 'UNPARSEABLE' };
 
   const inserted = await deps.insertEventIfAbsent(input);
-  if (!inserted) return { ok: true, action: 'EVENT_ALREADY_PROCESSED' };
+  if (!inserted) {
+    const existing = await deps.loadEventState(input.providerEventId);
+    // Terminal verdicts absorb repeats; non-terminal (PENDING_RETRY / ORPHAN)
+    // re-enter the exact same deterministic pipeline — the level-2 guards make
+    // an accidental re-credit impossible by construction.
+    if (existing !== null && TERMINAL_VERDICTS.has(existing)) {
+      return { ok: true, action: 'EVENT_ALREADY_PROCESSED' };
+    }
+  }
 
   const order = await deps.loadOrder(parsed);
   if (order === null) {

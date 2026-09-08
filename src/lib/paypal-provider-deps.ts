@@ -40,32 +40,48 @@ export const paypalWebhookDeps: WebhookFlowDeps = {
   },
 
   async loadOrder(parsed: ParsedEvent) {
-    let predicate;
+    const projections = {
+      id: paymentOrder.id,
+      state: paymentOrder.state,
+      amountCents: paymentOrder.amountCents,
+      currency: paymentOrder.currency,
+      providerCaptureId: paymentOrder.providerCaptureId,
+      providerOrderId: paymentOrder.providerOrderId,
+      runId: paymentOrder.runId,
+      runStatus: campaignRun.status,
+    };
+
+    const lookup = async (predicate: unknown) => {
+      const rows = await db()
+        .select(projections)
+        .from(paymentOrder)
+        .innerJoin(campaignRun, eq(paymentOrder.runId, campaignRun.id))
+        .where(and(eq(paymentOrder.provider, 'paypal'), predicate as never))
+        .limit(1);
+      return rows[0] ?? null;
+    };
+
+    // 1) Capture resolution: the capture id is the financial key (already-linked
+    //    order or a duplicate check). 2) When the capture is new, the link
+    //    comes from the event's related order id (supplementary data) — the
+    //    local order carries only the order id until the verified webhook.
     if (parsed.kind === 'CAPTURE_COMPLETED' && parsed.providerCaptureId !== null) {
-      predicate = eq(paymentOrder.providerCaptureId, parsed.providerCaptureId);
-    } else if (parsed.providerOrderId !== null) {
-      predicate = eq(paymentOrder.providerOrderId, parsed.providerOrderId);
-    } else {
-      return null;
+      const byCapture = await lookup(eq(paymentOrder.providerCaptureId, parsed.providerCaptureId));
+      if (byCapture !== null) return byCapture;
     }
+    if (parsed.providerOrderId !== null) {
+      return lookup(eq(paymentOrder.providerOrderId, parsed.providerOrderId));
+    }
+    return null;
+  },
 
+  async loadEventState(eventId: string) {
     const rows = await db()
-      .select({
-        id: paymentOrder.id,
-        state: paymentOrder.state,
-        amountCents: paymentOrder.amountCents,
-        currency: paymentOrder.currency,
-        providerCaptureId: paymentOrder.providerCaptureId,
-        providerOrderId: paymentOrder.providerOrderId,
-        runId: paymentOrder.runId,
-        runStatus: campaignRun.status,
-      })
-      .from(paymentOrder)
-      .innerJoin(campaignRun, eq(paymentOrder.runId, campaignRun.id))
-      .where(and(eq(paymentOrder.provider, 'paypal'), predicate))
+      .select({ processingState: paymentEvent.processingState })
+      .from(paymentEvent)
+      .where(eq(paymentEvent.providerEventId, eventId))
       .limit(1);
-
-    return rows[0] ?? null;
+    return rows[0]?.processingState ?? null;
   },
 
   async markApproved(orderId: string) {
