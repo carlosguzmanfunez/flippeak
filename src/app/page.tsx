@@ -102,7 +102,7 @@ export default async function LiveMarketPage({
                   Start Advertising
                 </Link>
                 <Link
-                  href="#how-it-works"
+                  href="/how-it-works"
                   className="inline-flex items-center rounded-[10px] border border-white/30 px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/10"
                 >
                   Learn How It Works
@@ -128,15 +128,15 @@ export default async function LiveMarketPage({
             {/* Market Stats — elegant glass card, real data only (approved §19) */}
             <div className="hidden shrink-0 flex-col items-end gap-4 lg:flex">
               <div
-                className="w-[268px] rounded-2xl border border-white/15 bg-navy-deep/70 p-5 backdrop-blur"
+                className="w-[284px] rounded-2xl border border-white/20 bg-navy-deep/75 p-5 backdrop-blur"
                 data-market-stats
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
+                <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-white">
                   Market Stats
                 </p>
                 <dl className="mt-1 divide-y divide-white/10">
                   <HeroStat icon="users" label="Active Campaigns" value={String(stats.competingNow)} />
-                  <HeroStat icon="rate" label="Top Time Rate" value={stats.topTimeRate ?? '—'} />
+                  <HeroStat icon="rate" label="Top Time Rate" value={stats.topTimeRate ?? '—'} highlight />
                   <HeroStat icon="grid" label="Categories Open" value={String(stats.categoriesOpen)} />
                 </dl>
               </div>
@@ -158,14 +158,23 @@ export default async function LiveMarketPage({
           serverNowMs={serverNowMs}
           activeCategory={activeCategory}
           isSignedIn={principal !== null}
-          marketStats={stats}
         />
       </main>
     </>
   );
 }
 
-function HeroStat({ icon, label, value }: { readonly icon: 'users' | 'rate' | 'grid'; readonly label: string; readonly value: string }) {
+function HeroStat({
+  icon,
+  label,
+  value,
+  highlight = false,
+}: {
+  readonly icon: 'users' | 'rate' | 'grid';
+  readonly label: string;
+  readonly value: string;
+  readonly highlight?: boolean;
+}) {
   const iconPaths: Record<'users' | 'rate' | 'grid', string> = {
     users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0',
     rate: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM7 13l3 3 6-7',
@@ -173,13 +182,15 @@ function HeroStat({ icon, label, value }: { readonly icon: 'users' | 'rate' | 'g
   };
   return (
     <div className="flex items-center justify-between gap-4 py-3">
-      <dt className="flex items-center gap-2 text-[12px] text-white/70">
-        <svg viewBox="0 0 24 24" className="size-4 text-electric" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <dt className="flex items-center gap-2 text-[12.5px] font-semibold text-white/85">
+        <svg viewBox="0 0 24 24" className="size-4 text-electric" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
           <path d={iconPaths[icon]} />
         </svg>
         {label}
       </dt>
-      <dd className="fp-figure text-[16px] font-bold text-white">{value}</dd>
+      <dd className={`fp-figure ${highlight ? 'text-[1.125rem] font-extrabold' : 'text-[1.0625rem] font-bold'} text-white`}>
+        {value}
+      </dd>
     </div>
   );
 }

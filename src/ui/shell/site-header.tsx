@@ -8,7 +8,7 @@ import { resolveHeaderViewer } from '@/ui/shell/site-header-model';
 const NAV = [
   { href: '/', label: 'Home', activeOn: '/' },
   { href: '/', label: 'Browse', activeOn: '/?category=' },
-  { href: '/#how-it-works', label: 'How It Works', activeOn: '/#how-it-works' },
+  { href: '/how-it-works', label: 'How It Works', activeOn: '/how-it-works' },
 ] as const;
 
 /**

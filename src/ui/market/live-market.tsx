@@ -11,7 +11,6 @@ interface LiveMarketProps {
   readonly serverNowMs: number;
   readonly activeCategory: CategoryId | undefined;
   readonly isSignedIn: boolean;
-  readonly marketStats: { readonly competingNow: number; readonly topTimeRate: string | null; readonly categoriesOpen: number };
 }
 
 /**
@@ -19,7 +18,7 @@ interface LiveMarketProps {
  * ladder as dense tiers (ties are ONE position with an accessible disclosure),
  * and informational cards. Ranking is Time Rate only; nothing here is authority.
  */
-export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn, marketStats }: LiveMarketProps) {
+export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }: LiveMarketProps) {
   const tiers = buildTiers(entries);
   const leadingRate = tiers[0]?.timeRateCentsPerHour;
   const cta = isSignedIn ? '/campaigns/new' : '/register';
@@ -167,15 +166,6 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn, m
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card" data-market-stats>
-            <h2 className="text-[15px] font-bold text-navy">Market Stats</h2>
-            <dl className="mt-3 space-y-3">
-              <Stat label="Active Campaigns" value={String(marketStats.competingNow)} />
-              <Stat label="Top Time Rate" value={marketStats.topTimeRate ?? '—'} />
-              <Stat label="Categories Open" value={String(marketStats.categoriesOpen)} />
-            </dl>
-          </div>
-
           <div className="rounded-2xl border border-line bg-softtint p-6 text-center">
             <svg viewBox="0 0 24 24" className="mx-auto size-7 text-primary-blue" fill="currentColor" aria-hidden="true">
               <path d="M3 17h3l3-8 3 4 3-9 2 5h4v2h-5l-1-1.5L12 16l-2.4-5.2L7 19H3z" />
@@ -188,15 +178,6 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn, m
         </aside>
       </div>
     </section>
-  );
-}
-
-function Stat({ label, value }: { readonly label: string; readonly value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-[12px] text-muted">{label}</dt>
-      <dd className="fp-figure text-[14px] font-bold text-navy">{value}</dd>
-    </div>
   );
 }
 
