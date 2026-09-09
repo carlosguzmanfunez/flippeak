@@ -48,7 +48,7 @@ export default async function NewRunPage({ params }: { params: Promise<{ id: str
               {campaign.content.summary}
             </p>
             <p className="mt-2 text-[0.6875rem] text-faint">
-              {CATEGORY_LABELS[campaign.content.category]} · {campaign.content.subtype}
+                  {CATEGORY_LABELS[campaign.content.category]} • {campaign.content.subtype}
             </p>
           </div>
 

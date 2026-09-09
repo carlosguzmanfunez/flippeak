@@ -58,21 +58,9 @@ export async function SiteHeader({
           ))}
         </nav>
 
-        <nav aria-label="Account" className="ml-auto flex items-center gap-4">
+        <nav aria-label="Account" className="ml-auto flex items-center gap-3">
           {principal ? (
             <>
-              <Link
-                href="/my-campaigns"
-                className="hidden text-[13px] text-muted transition-colors hover:text-ink sm:inline"
-              >
-                My campaigns
-              </Link>
-              <Link
-                href="/campaigns/new"
-                className="hidden rounded-lg bg-electric px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:opacity-90 sm:inline-block"
-              >
-                New campaign
-              </Link>
               <Link
                 href="/account"
                 className="flex size-8 items-center justify-center rounded-full bg-soft-blue text-[12px] font-semibold text-primary-blue"
@@ -83,7 +71,7 @@ export async function SiteHeader({
               <form action={signOutAction}>
                 <button
                   type="submit"
-                  className="text-[13px] text-muted transition-colors outline-none hover:text-ink focus-visible:text-ink focus-visible:underline"
+                  className="hidden text-[13px] text-muted transition-colors outline-none hover:text-ink focus-visible:text-ink focus-visible:underline sm:inline"
                 >
                   Log out
                 </button>
@@ -93,20 +81,58 @@ export async function SiteHeader({
             <>
               <Link
                 href="/login"
-                className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-softtint hover:text-ink"
+                className="hidden rounded-lg px-3 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-softtint hover:text-ink sm:inline-block"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="rounded-lg bg-electric px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:opacity-90"
+                className="inline-block rounded-lg bg-electric px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:opacity-90"
               >
                 Create account
               </Link>
             </>
           )}
+
+          {/* Mobile navigation menu (accessible disclosure, no JS) */}
+          <details className="relative md:hidden">
+            <summary
+              aria-label="Open menu"
+              className="flex size-9 cursor-pointer list-none items-center justify-center rounded-lg border border-line text-muted [&::-webkit-details-marker]:hidden"
+            >
+              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </summary>
+            <div className="absolute right-0 top-11 w-52 rounded-xl border border-line bg-surface p-2 shadow-raised">
+              {principal ? (
+                <>
+                  <MobileNavItem href="/" label="Live Market" />
+                  <MobileNavItem href="/my-campaigns" label="My Campaigns" />
+                  <MobileNavItem href="/campaigns/new" label="Create Campaign" />
+                  <MobileNavItem href="/account" label="Account" />
+                </>
+              ) : (
+                <>
+                  <MobileNavItem href="/login" label="Sign in" />
+                  <MobileNavItem href="/register" label="Create account" />
+                </>
+              )}
+            </div>
+          </details>
         </nav>
       </div>
     </header>
+  );
+}
+
+function MobileNavItem({ href, label }: { readonly href: string; readonly label: string }) {
+  return (
+    <Link
+      href={href}
+      className="block rounded-lg px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-softtint"
+    >
+      {label}
+    </Link>
   );
 }

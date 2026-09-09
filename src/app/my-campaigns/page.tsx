@@ -75,7 +75,7 @@ export default async function MyCampaignsPage() {
                   </p>
                   <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <p className="text-[0.6875rem] text-faint">
-                      {CATEGORY_LABELS[campaign.category]} Â· {campaign.subtype}
+                      {CATEGORY_LABELS[campaign.category]} • {campaign.subtype}
                     </p>
                     <span className="text-[0.75rem]">
                       <Link
@@ -84,7 +84,7 @@ export default async function MyCampaignsPage() {
                       >
                         Run
                       </Link>
-                      <span className="px-2 text-faint">Â·</span>
+                      <span className="px-2 text-faint">•</span>
                       <Link
                         href={`/campaigns/${campaign.id}/runs`}
                         className="text-muted transition-colors hover:text-ink"
