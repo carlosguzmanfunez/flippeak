@@ -52,7 +52,7 @@ async function main() {
     const browser2 = await chromium.launch();
     const context2 = await browser2.newContext({ storageState: saved });
     const page2 = await context2.newPage();
-    const st = loadState();
+    const st = state();
     await page2.goto(`${BASE}/campaigns/${st.campaignId}/runs`);
     await page2.waitForLoadState('networkidle');
     const hasCheck = await page2.getByRole('button', { name: /check payment status/i }).count();

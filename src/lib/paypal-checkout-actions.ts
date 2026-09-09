@@ -42,7 +42,7 @@ export async function checkpointOrderAction(formData: FormData) {
   if (payment === null || payment.providerOrderId === null) {
     return { ok: false as const };
   }
-  if (payment.state === 'PENDING') {
+  if (payment.state === 'PENDING' || payment.state === 'APPROVED') {
     try {
       await checkoutDependencies.captureProviderOrder({ providerOrderId: payment.providerOrderId });
       return { ok: true as const, state: 'CAPTURED' as const };
