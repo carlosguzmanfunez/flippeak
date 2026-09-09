@@ -7,13 +7,15 @@ import { writeFileSync, readFileSync } from 'node:fs';
 const BASE = 'https://flippeak.vercel.app';
 const STATE = '.qa-ladder.json';
 
+const FUND_CENTS = 5_000; // $50 per run: long-lived ladder density
+
 const LOAD = [
-  ['Alpha Peak', 'gaming', 'Indie Game', 4_500],
-  ['Bravo Studio', 'creators', 'Video Creator', 1_800],
-  ['Charlie Fest', 'events', 'Concert', 8_000],
-  ['Delta Waves', 'music-and-artists', 'Musician', 1_200],
-  ['Echo Arena', 'gaming', 'Studio', 3_000],
-  ['Foxtrot Forge', 'gaming', 'Studio', 4_500], // same rate as Alpha: tie #1
+  ['Alpha Peak II', 'gaming', 'Indie Game', 4_500],
+  ['Bravo Studio II', 'creators', 'Video Creator', 1_800],
+  ['Charlie Fest II', 'events', 'Concert', 8_000],
+  ['Delta Waves II', 'music-and-artists', 'Musician', 1_200],
+  ['Echo Arena II', 'gaming', 'Studio', 3_000],
+  ['Foxtrot Forge II', 'gaming', 'Studio', 4_500], // same rate as Alpha: tie #1
 ];
 
 async function signIn(page) {
@@ -68,7 +70,7 @@ async function main() {
       await page.goto(`${BASE}/campaigns/new`);
       await page.waitForLoadState('networkidle');
       await page.fill('input[name="title"]', title);
-      await page.fill('textarea[name="summary"], input[name="summary"]', `Ladder QA â€” ${title}`);
+      await page.fill('textarea[name="summary"], input[name="summary"]', `Ladder QA Ã¢â‚¬â€ ${title}`);
       await page.fill('input[name="destinationUrl"], input[name="destination_url"]', 'https://example.com');
       await page.selectOption('select[name="category"]', category);
       await page.selectOption('select[name="subtype"]', subtype);
@@ -82,7 +84,7 @@ async function main() {
       await page.getByRole('button', { name: /create run/i }).click();
       await page.waitForURL('**/runs', { timeout: 20_000 }).catch(() => {});
       const amt = page.locator('input[id^="checkout-amount-"]').first();
-      await amt.fill('5');
+      await amt.fill('50');
       await page.getByRole('button', { name: /fund & checkout/i }).click();
       await page.waitForURL('**checkoutnow?*', { timeout: 45_000 });
       saved.entries.push({ title, campaignId, rate, approvalUrl: page.url() });
@@ -105,7 +107,7 @@ async function main() {
       await page.waitForTimeout(2_500);
       console.log('captured:', e.title);
     }
-    console.log('LISTO â€” esperar webhooks y verificar mercado');
+    console.log('LISTO Ã¢â‚¬â€ esperar webhooks y verificar mercado');
   }
 
   await browser.close();
