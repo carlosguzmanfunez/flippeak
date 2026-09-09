@@ -28,7 +28,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
 
   return (
     <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8" data-surface="market">
-      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)_290px]">
+      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_290px]">
         {/* LEFT — categories + filters (real support only) */}
         <aside className="hidden space-y-5 lg:block">
           <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
@@ -151,8 +151,8 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
           ) : null}
         </div>
 
-        {/* RIGHT — informational cards */}
-        <aside className="hidden space-y-5 lg:block">
+        {/* RIGHT — informational cards (desktop ≥1280 only; tablet collapses per spec) */}
+        <aside className="hidden space-y-5 xl:block">
           <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
             <h2 className="text-[15px] font-bold text-navy">How It Works</h2>
             <ol className="mt-4 space-y-4">
