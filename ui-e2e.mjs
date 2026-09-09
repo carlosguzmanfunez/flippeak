@@ -44,6 +44,41 @@ async function main() {
   const browser = await chromium.launch();
   const page = await (await browser.newContext()).newPage();
 
+  if (command === 'again') {
+    const saved = JSON.parse(readFileSync('.ui-e2e-storage.json', 'utf8'));
+    await browser.close();
+    const b3 = await chromium.launch();
+    const c3 = await b3.newContext({ storageState: saved });
+    const p3 = await c3.newPage();
+    const st = state();
+    await p3.goto(`${BASE}/campaigns/${st.campaignId}/runs`);
+    await p3.waitForLoadState('networkidle');
+    const hasAgain = await p3.getByRole('button', { name: /run again/i }).count();
+    console.log('run-again control present:', hasAgain > 0);
+    // React-safe native slider set (standard band, $25/hour = 2500 cents).
+    await p3.locator('input[type="range"]').first().evaluate((el) => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(el, '2500');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await p3.getByRole('button', { name: /run again/i }).click();
+    await p3.waitForTimeout(2_500);
+    const alert = await p3.locator('[role="alert"]').allTextContents().catch(() => []);
+    if (alert.some((t) => t.trim().length > 0)) {
+      await p3.screenshot({ path: 'ui-e2e-again-error.png' });
+      console.log('RUN AGAIN ALERT:', JSON.stringify(alert));
+    }
+    const amt = p3.locator('input[id^="checkout-amount-"]').first();
+    await amt.fill('10');
+    await p3.getByRole('button', { name: /fund & checkout/i }).click();
+    await p3.waitForURL('**checkoutnow?*', { timeout: 45_000 });
+    console.log('APPROVAL_URL:', p3.url());
+    await c3.close();
+    await b3.close();
+    return;
+  }
+
   if (command !== 'flow') {
     // Reuse the saved session (same browser context storage) and drive the
     // REAL UI: runs page -> Check payment status -> capture -> reflect state.

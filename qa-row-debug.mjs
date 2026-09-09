@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await (await browser.newContext()).newPage();
+await page.goto('https://flippeak.vercel.app/');
+await page.waitForLoadState('networkidle');
+const row = page.locator('main ol li').first();
+const text = await row.innerText().catch(() => '(no row)');
+const html = await row.innerHTML().catch(() => 'none');
+console.log('ROW TEXT:', JSON.stringify(text));
+console.log('ROW HTML SNIPPET:', html.slice(0, 800));
+await browser.close();
