@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { CATEGORIES, CATEGORY_LABELS, type CategoryId } from '@/config/domain-config';
 import { buildTiers } from '@/modules/ranking/dense-rank';
-import { formatTimeRate, toCents } from '@/modules/economics/money';
+import { formatTimeRateCompact, toCents } from '@/modules/economics/money';
 import { MarketTier } from './market-tier';
 import { spotlightIndex } from './rotation';
 import type { MarketEntry } from './types';
@@ -130,10 +130,10 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
           {leadingRate !== undefined ? (
             <p className="mt-3 text-[12px] text-faint">
               Join the top position at{' '}
-              <span className="fp-figure font-medium text-muted">{formatTimeRate(toCents(leadingRate)).replace(' /hour', '')}/h</span>{' '}
+              <span className="fp-figure font-medium text-muted">{formatTimeRateCompact(toCents(leadingRate))}</span>{' '}
               — become sole #1 at{' '}
               <span className="fp-figure font-medium text-muted">
-                {formatTimeRate(toCents(leadingRate + 100)).replace(' /hour', '')}/h
+                {formatTimeRateCompact(toCents(leadingRate + 100))}
               </span>
               . Equal Time Rates share the same position; the highlighted one rotates every 20 seconds.
             </p>

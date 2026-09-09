@@ -4,6 +4,7 @@ import {
   centsFromMajorUnits,
   formatCents,
   formatTimeRate,
+  formatTimeRateCompact,
   isCents,
   parseCents,
   subtractCents,
@@ -47,6 +48,13 @@ describe('exact money', () => {
     expect(centsFromMajorUnits(12.34)).toBe(parseCents('12.34'));
     expect(centsFromMajorUnits(0.07)).toBe(parseCents('0.07'));
     expect(centsFromMajorUnits(29.99)).toBe(parseCents('29.99'));
+  });
+
+  it('canonical compact Time Rate: "$25.00/h", "$45.00/h", "$1.00/h", "$1,000.00/h"', () => {
+    expect(formatTimeRateCompact(toCents(2_500))).toBe('$25.00/h');
+    expect(formatTimeRateCompact(toCents(4_500))).toBe('$45.00/h');
+    expect(formatTimeRateCompact(toCents(100))).toBe('$1.00/h');
+    expect(formatTimeRateCompact(toCents(100_000))).toBe('$1,000.00/h');
   });
 
   it('keeps arithmetic exact', () => {

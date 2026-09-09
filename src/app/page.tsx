@@ -7,7 +7,7 @@ import { SiteHeader } from '@/ui/shell/site-header';
 import { LiveMarket } from '@/ui/market/live-market';
 import type { MarketEntry } from '@/ui/market/types';
 import { authoritativeServerNowMs, listLiveMarketRuns } from '@/lib/live-market-queries';
-import { formatTimeRate, toCents } from '@/modules/economics/money';
+import { formatTimeRateCompact, toCents } from '@/modules/economics/money';
 import { getAuthenticatedPrincipal } from '@/lib/auth-guards';
 
 export const dynamic = 'force-dynamic';
@@ -46,7 +46,7 @@ export default async function LiveMarketPage({
   const topRate = liveRuns[0]?.timeRateCentsPerHour;
   const stats = {
     competingNow: liveRuns.length,
-    topTimeRate: topRate !== undefined ? formatTimeRate(toCents(topRate)) : null,
+    topTimeRate: topRate !== undefined ? formatTimeRateCompact(toCents(topRate)) : null,
     categoriesOpen: CATEGORIES.length,
   };
 

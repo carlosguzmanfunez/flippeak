@@ -11,7 +11,7 @@ import { CATEGORY_LABELS } from '@/config/domain-config';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'My campaigns â€” FlipPeak',
+  title: 'My campaigns — FlipPeak',
 };
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-GB', {

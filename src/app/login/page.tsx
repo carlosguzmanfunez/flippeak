@@ -6,7 +6,7 @@ import { LoginForm } from '@/ui/auth/login-form';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'Sign in â€” FlipPeak',
+  title: 'Sign in — FlipPeak',
   alternates: { canonical: '/login' },
 };
 

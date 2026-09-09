@@ -19,11 +19,11 @@ import type { AuthenticatedPrincipal } from '@/modules/auth/principal';
  * Authorised by design review. Phases, ordered and idempotent in a fresh or
  * re-run environment:
  *
- *   phase 1 â€” DRAFT â†’ verified funding â†’ ACTIVE â†’ economically exhausted â†’
+ *   phase 1 -> DRAFT -> verified funding -> ACTIVE -> economically exhausted ->
  *             EXHAUSTED (exact cap, no state manipulation);
- *   phase 2 â€” positive Run Again on the legitimately exhausted run (only
+ *   phase 2 -> positive Run Again on the legitimately exhausted run (only
  *             created once; re-runs validate instead of re-creating);
- *   phase 3 â€” Boost on the legitimized run child: settle at the OLD rate,
+ *   phase 3 -> Boost on the legitimized run child: settle at the OLD rate,
  *             new rate applied, anchor moved, then legitimate re-exhaustion
  *             at the boosted rate (verified once; re-runs validate).
  *
@@ -40,7 +40,7 @@ const OWNER: AuthenticatedPrincipal = {
 
 const CENT_MS_PER_CENT = 3_600_000;
 const LIFE_RATE = 10_100; // $101/hour, the audited runtime campaign rate
-const BOOSTED_RATE = 20_200; // $202/hour â€” strict increase from 10_100
+const BOOSTED_RATE = 20_200; // $202/hour - strict increase from 10_100
 
 type FundingDepsModule = {
   readonly loadOwnedRunForFunding: FundingDependencies['loadOwnedRun'];
@@ -124,7 +124,7 @@ const exhaustedWithLedger = async (previousIsNull: boolean): Promise<string | nu
   return rows[0]?.id ?? null;
 };
 
-describe.skipIf(!CYCLE_ENABLED)('4D/4E lifecycle â€” provider=internal, audited test path', () => {
+describe.skipIf(!CYCLE_ENABLED)('4D/4E lifecycle - provider=internal, audited test path', () => {
   it(
     'phases 1-3: full cycle, Run Again and Boost, without state manipulation',
     { timeout: 30_000 },
@@ -241,8 +241,8 @@ async function runBoostCycle(childDraftId: string): Promise<void> {
   const deps = await fundingDepsForOwner();
 
   // Wide funding: 10,000 cents ($100) gives a large headroom (~59 min at the
-  // original rate), so the boost settlement is provably exact â€” the cap never
-  // truncates â€” while still being a legitimate verified credit.
+  // original rate), so the boost settlement is provably exact - the cap never
+  // truncates - while still being a legitimate verified credit.
   expect(await fundRun(deps, { runId: childDraftId, amountCents: 10_000 })).toEqual({ ok: true });
   expect(await activateRun(deps, { runId: childDraftId })).toEqual({ ok: true });
 

@@ -90,3 +90,11 @@ export function formatCents(value: Cents, options?: { readonly trimWholeUnits?: 
 export function formatTimeRate(centsPerHour: Cents): string {
   return `${formatCents(centsPerHour, { trimWholeUnits: true })}/hour`;
 }
+
+/**
+ * Canonical compact Time Rate for the market: "$45.00/h", "$1.00/h",
+ * "$1,000.00/h". Single source: no manual suffixes anywhere in the UI.
+ */
+export function formatTimeRateCompact(centsPerHour: Cents): string {
+  return `${formatCents(centsPerHour)}/h`;
+}

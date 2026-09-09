@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-import { formatTimeRate, toCents } from '@/modules/economics/money';
-import { formatDuration } from '@/lib/format';
+import { useRouter } from 'next/navigation';
+import { formatTimeRateCompact, toCents } from '@/modules/economics/money';
 import { msUntilNextRotation, spotlightIndex } from './rotation';
+import { formatRuntimeWithSeconds, projectRemaining } from './runtime-projection';
 import { tierView } from './tier-view';
 import type { MarketEntry } from './types';
 
@@ -30,7 +31,9 @@ export function MarketTier({
   serverNowMs,
   initialSpotlightIndex,
 }: MarketTierProps) {
+  const router = useRouter();
   const [spotlight, setSpotlight] = useState(initialSpotlightIndex);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const memberCount = members.length;
 
   useEffect(() => {
@@ -50,6 +53,30 @@ export function MarketTier({
       if (timer !== undefined) clearTimeout(timer);
     };
   }, [serverNowMs, memberCount]);
+
+  // Runtime tick: project the authoritative server snapshot forward with the
+  // client DELTA (monotonic, skew-proof, presentation only — §1 of the QA
+  // corrective prompt). At zero we do nothing locally except wait for the
+  // authoritative revalidation (server keeps the market truth, ADR-012).
+  useEffect(() => {
+    const startedAt = Date.now();
+    let refreshedAtZero = false;
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      setElapsedMs(elapsed);
+      const anyLive = members.some((member) => projectRemaining(member.remainingRuntimeMs, elapsed) > 0);
+      if (!anyLive && !refreshedAtZero) {
+        refreshedAtZero = true;
+        router.refresh();
+        clearInterval(timer);
+      }
+    }, 1_000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [members, router]);
+
+  const projected = (member: MarketEntry) => projectRemaining(member.remainingRuntimeMs, elapsedMs);
 
   const view = tierView(members, spotlight % memberCount);
   const isTie = view.tiedCount > 1;
@@ -81,15 +108,14 @@ export function MarketTier({
         </span>
 
         <span className="shrink-0 text-right">
-          <span className="fp-figure text-[15px] font-bold text-navy">
-            {formatTimeRate(toCents(view.lead.timeRateCentsPerHour)).replace(' /hour', '')}
-            <span className="ml-0.5 text-[11px] font-medium text-faint">/h</span>
+            <span className="fp-figure text-[15px] font-bold text-navy">
+              {formatTimeRateCompact(toCents(view.lead.timeRateCentsPerHour))}
+            </span>
           </span>
-        </span>
 
-        <span className="hidden shrink-0 md:block">
-          <RuntimeLeft ms={view.lead.remainingRuntimeMs} />
-        </span>
+          <span className="hidden shrink-0 md:block">
+            <RuntimeLeft ms={projected(view.lead)} />
+          </span>
 
         <span className="shrink-0">
           <StatusBadge />
@@ -118,11 +144,10 @@ export function MarketTier({
                     <CategoryChip label={member.categoryLabel} />
                   </span>
                   <span className="fp-figure text-[13px] font-semibold text-navy">
-                    {formatTimeRate(toCents(member.timeRateCentsPerHour)).replace(' /hour', '')}
-                    <span className="ml-0.5 text-[10px] font-medium text-faint">/h</span>
+                    {formatTimeRateCompact(toCents(member.timeRateCentsPerHour))}
                   </span>
                   <span className="hidden md:block">
-                    <RuntimeLeft ms={member.remainingRuntimeMs} />
+                    <RuntimeLeft ms={projected(member)} />
                   </span>
                   <StatusBadge />
                 </li>
@@ -185,12 +210,12 @@ function CategoryChip({ label }: { readonly label: string }) {
 
 function RuntimeLeft({ ms }: { readonly ms: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[12px] text-muted">
+    <span className="inline-flex items-center gap-1.5 text-[12px] text-muted" data-runtime-projected>
       <svg viewBox="0 0 24 24" className="size-3.5 text-faint" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <circle cx="12" cy="12" r="9" />
         <path d="M12 7v5l3 2" />
       </svg>
-      {formatDuration(ms)} left
+      {formatRuntimeWithSeconds(ms)} left
     </span>
   );
 }

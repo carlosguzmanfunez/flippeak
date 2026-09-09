@@ -9,7 +9,7 @@ import { CampaignForm } from '@/ui/campaigns/campaign-form';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'New campaign â€” FlipPeak',
+  title: 'New campaign — FlipPeak',
 };
 
 /**

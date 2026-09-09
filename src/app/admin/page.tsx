@@ -8,7 +8,7 @@ import { decideAdminAccess } from '@/modules/auth/access';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'Admin â€” FlipPeak',
+  title: 'Admin — FlipPeak',
 };
 
 /**

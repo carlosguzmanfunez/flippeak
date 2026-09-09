@@ -9,7 +9,7 @@ import { decideUserAccess } from '@/modules/auth/access';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'Account â€” FlipPeak',
+  title: 'Account — FlipPeak',
 };
 
 /**
