@@ -20,6 +20,7 @@ export default tseslint.config(
       'visual-shots.mjs',
       'qa-row-debug.mjs',
       'qa-ladder.mjs',
+      'runtime-evidence.mjs',
     ],
   },
   js.configs.recommended,
