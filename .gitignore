@@ -12,7 +12,7 @@ next-env.d.ts
 # testing
 coverage/
 
-# environment ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â never commit real secrets
+# environment ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â never commit real secrets
 .env
 .env.*
 !.env.example
@@ -47,3 +47,6 @@ ui-e2e-storage.json
 
 # Visual QA snapshots (generated)
 shots/
+
+# QA ladder harness
+.qa-ladder.json
