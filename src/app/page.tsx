@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { CATEGORIES, CATEGORY_LABELS, type CategoryId } from '@/config/domain-config';
@@ -55,11 +56,13 @@ export default async function LiveMarketPage({
       <main>
         {/* HERO (approved reference: peak = position) */}
         <section className="relative isolate overflow-hidden" data-surface="hero">
-          <img
+          <Image
             src="/hero-mountains.svg"
             alt=""
-            aria-hidden="true"
-            className="absolute inset-0 -z-10 h-full w-full object-cover"
+            fill
+            priority
+            sizes="100vw"
+            className="absolute inset-0 -z-10 object-cover"
           />
           <div
             className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-deep/95 via-navy-deep/80 to-transparent"
