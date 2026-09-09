@@ -9,9 +9,9 @@ import { MARKET_PROJECTION } from '@/lib/live-market-queries';
  * pinned by economic-state.test (anchor + remaining > 0, ADR-012).
  */
 describe('listLiveMarketRuns projection', () => {
-  it('selects only public market fields plus the derived remaining', () => {
+  it('selects only public market fields plus server-derived presentation values', () => {
     expect(Object.keys(MARKET_PROJECTION).sort()).toEqual(
-      ['category', 'id', 'remainingCentMs', 'subtype', 'summary', 'timeRateCentsPerHour', 'title'].sort(),
+      ['category', 'destinationUrl', 'id', 'initialRuntimeMs', 'remainingCentMs', 'subtype', 'summary', 'timeRateCentsPerHour', 'title'].sort(),
     );
   });
 

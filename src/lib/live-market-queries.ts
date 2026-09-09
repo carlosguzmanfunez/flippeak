@@ -1,4 +1,4 @@
-import { desc } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
 
 import { campaignRun } from '@/db/campaign-schema';
 import { db } from '@/db/client';
@@ -31,6 +31,9 @@ export type LiveMarketRun = {
   readonly summary: string;
   readonly category: string;
   readonly subtype: string;
+  readonly destinationUrl: string;
+  /** Derived server-side: funded capacity / rate (presentation only, not persisted). */
+  readonly initialRuntimeMs: number;
   /** Derived economic remaining (cent-ms, bigint wire string). */
   readonly remainingCentMs: number;
 };
@@ -42,6 +45,8 @@ export const MARKET_PROJECTION = {
   summary: campaignRun.summary,
   category: campaignRun.category,
   subtype: campaignRun.subtype,
+  destinationUrl: campaignRun.destinationUrl,
+  initialRuntimeMs: sql<number>`cast((${campaignRun.creditedCents} * 3600000 / ${campaignRun.timeRateCentsPerHour}) as bigint)`,
   remainingCentMs: ECONOMIC_REMAINING_CENT_MS,
 };
 

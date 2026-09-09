@@ -10,6 +10,8 @@ const entry = (id: string, rate: number): MarketEntry => ({
   categoryLabel: 'Gaming',
   subtype: null,
   remainingRuntimeMs: 0,
+  initialRuntimeMs: 1_000,
+  destinationUrl: 'https://example.com',
 });
 
 describe('tier representation (approved visual §9-10, test §35)', () => {

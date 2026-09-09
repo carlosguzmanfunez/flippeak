@@ -39,7 +39,11 @@ export default async function LiveMarketPage({
       summary: run.summary,
       categoryLabel: CATEGORY_LABELS[run.category as CategoryId] ?? run.category,
       subtype: run.subtype,
+      // Derived from PostgreSQL economics: room to live at the current rate.
       remainingRuntimeMs: Math.floor(Number(run.remainingCentMs) / run.timeRateCentsPerHour),
+      // Derived server-side: funded capacity at the current rate (presentation only).
+      initialRuntimeMs: Number(run.initialRuntimeMs),
+      destinationUrl: run.destinationUrl,
     }));
 
   const serverNowMs = await authoritativeServerNowMs();

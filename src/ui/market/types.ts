@@ -12,4 +12,8 @@ export interface MarketEntry extends Rankable {
   readonly categoryLabel: string;
   readonly subtype: string | null;
   readonly remainingRuntimeMs: number;
+  /** Initial runtime at the current rate (credited capacity / rate), derived server-side. */
+  readonly initialRuntimeMs: number;
+  /** Authorized snapshot destination (validated https on the backend). */
+  readonly destinationUrl: string;
 }
