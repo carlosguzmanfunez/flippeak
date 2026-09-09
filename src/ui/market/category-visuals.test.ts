@@ -8,6 +8,12 @@ describe('category visuals (v4 §3-4 tests)', () => {
     expect(categoryVisual('tech').accent).toBe('#2563EB');
   });
 
+  it('row display labels resolve to the same palette as ids', () => {
+    expect(categoryVisual('Creators').accent).toBe('#7C3AED');
+    expect(categoryVisual('Music & Artists').accent).toBe('#E91E63');
+    expect(categoryVisual('Gaming').accent).toBe('#F97316');
+  });
+
   it('unknown categories fall back to Other safely (never crash, never undefined)', () => {
     const fallback = categoryVisual('sports');
     expect(fallback.accent).toBe('#64748B');

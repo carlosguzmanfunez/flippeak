@@ -46,9 +46,19 @@ const CATEGORY_VISUALS: Record<CategoryId, CategoryVisual> = {
   other: { label: 'Other', accent: '#64748B', soft: '#EEF2F6', dark: '#475569', icon: CATEGORY_ICONS.other },
 };
 
+const CATEGORY_VISUAL_BY_LABEL: ReadonlyMap<string, CategoryVisual> = new Map(
+  Object.values(CATEGORY_VISUALS).map((visual) => [visual.label.toLowerCase(), visual]),
+);
+
+/**
+ * Resolves a row's category to its visual identity. Accepts both the internal
+ * id (`creators`) and the display label (`Creators`) since market rows carry
+ * the label — unknown values fall back to the neutral `Other` presentation.
+ */
 export function categoryVisual(category: string): CategoryVisual {
-  const known = (CATEGORY_VISUALS as Record<string, CategoryVisual>)[category];
-  return known ?? CATEGORY_VISUALS.other;
+  const id = category.trim().toLowerCase();
+  const known = (CATEGORY_VISUALS as Record<string, CategoryVisual>)[id];
+  return known ?? CATEGORY_VISUAL_BY_LABEL.get(id) ?? CATEGORY_VISUALS.other;
 }
 
 export { CATEGORY_VISUALS };
