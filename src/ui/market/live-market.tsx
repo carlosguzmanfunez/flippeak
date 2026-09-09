@@ -11,17 +11,15 @@ interface LiveMarketProps {
   readonly serverNowMs: number;
   readonly activeCategory: CategoryId | undefined;
   readonly isSignedIn: boolean;
+  readonly marketStats: { readonly competingNow: number; readonly topTimeRate: string | null; readonly categoriesOpen: number };
 }
 
 /**
- * Live Market (approved master visual): three columns — category filters,
- * the competitive ladder, and informational cards.
- *
- * Rank is computed from Time Rate alone (dense, ties share a position); the
- * ladder rows are a premium vertical list, never big cards. Everything shown
- * comes from real data; no filters without backend support are rendered.
+ * Live Market (approved master visual): category panel, the competitive
+ * ladder as dense tiers (ties are ONE position with an accessible disclosure),
+ * and informational cards. Ranking is Time Rate only; nothing here is authority.
  */
-export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }: LiveMarketProps) {
+export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn, marketStats }: LiveMarketProps) {
   const tiers = buildTiers(entries);
   const leadingRate = tiers[0]?.timeRateCentsPerHour;
   const cta = isSignedIn ? '/campaigns/new' : '/register';
@@ -29,17 +27,12 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
   return (
     <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8" data-surface="market">
       <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_290px]">
-        {/* LEFT — categories + filters (real support only) */}
+        {/* LEFT — categories (real product set only) */}
         <aside className="hidden space-y-5 lg:block">
           <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
             <h2 className="text-[13px] font-semibold text-ink">Categories</h2>
             <ul className="mt-3 space-y-0.5">
-              <CategoryItem
-                href="/"
-                label="All Categories"
-                isActive={activeCategory === undefined}
-                icon="grid"
-              />
+              <CategoryItem href="/" label="All Categories" isActive={activeCategory === undefined} icon="grid" />
               {CATEGORIES.map((category) => (
                 <CategoryItem
                   key={category}
@@ -57,10 +50,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
                 Order is always by Time Rate — the only field that moves your position.
               </p>
               {activeCategory !== undefined ? (
-                <Link
-                  href="/"
-                  className="mt-3 inline-block text-[12px] font-medium text-primary-blue hover:underline"
-                >
+                <Link href="/" className="mt-3 inline-block text-[12px] font-medium text-primary-blue hover:underline">
                   Clear Filters
                 </Link>
               ) : null}
@@ -68,60 +58,61 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
           </div>
 
           <div className="rounded-2xl border border-line bg-navy p-5 text-white">
-            <h3 className="text-[16px] font-bold leading-snug">
-              Turn Your Time Into Opportunity
-            </h3>
+            <h3 className="text-[16px] font-bold leading-snug">Advertise With Us</h3>
             <p className="mt-2 text-[12px] leading-relaxed text-white/70">
-              Simple. Fair. Effective.
+              Reach a real audience. Compete for the top positions.
             </p>
+            <Link
+              href={cta}
+              className="mt-4 inline-flex w-full items-center justify-center rounded-[10px] bg-electric px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-blue"
+            >
+              Create Your Campaign
+            </Link>
           </div>
         </aside>
 
-        {/* CENTER — competitive ladder */}
-        <div className="min-w-0">
+        {/* CENTER — the ladder */}
+        <div className="min-w-0" id="how-it-works">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <div>
               <h2 className="text-[1.5rem] font-bold tracking-tight text-navy">Live Market</h2>
               <p className="mt-1 text-[13px] text-muted">
-                Top campaigns competing for visibility right now.
-                <span className="hidden sm:inline"> Your Time Rate determines your position.</span>
+                Live rankings
+                <span className="hidden sm:inline"> — updated with real system state.</span>
               </p>
             </div>
             <span className="text-[12px] font-medium text-faint">Sorted by Position</span>
           </div>
 
-          {/* mobile category chips */}
           <nav aria-label="Market categories" className="mt-4 overflow-x-auto pb-1 lg:hidden">
             <ul className="flex gap-2">
               <Chip href="/" label="All" isActive={activeCategory === undefined} />
               {CATEGORIES.map((category) => (
-                <Chip
-                  key={category}
-                  href={`/?category=${category}`}
-                  label={CATEGORY_LABELS[category]}
-                  isActive={activeCategory === category}
-                />
+                <Chip key={category} href={`/?category=${category}`} label={CATEGORY_LABELS[category]} isActive={activeCategory === category} />
               ))}
             </ul>
           </nav>
 
           <div className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
-            <div className="hidden grid-cols-[40px_minmax(0,1fr)_96px_110px_110px_80px] gap-3 border-b border-line bg-softtint px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-faint lg:grid">
-              <span>Rank</span>
-              <span>Business / Campaign</span>
-              <span>Category</span>
-              <span className="text-right">Time Rate</span>
-              <span>Estimated Runtime</span>
+            <div className="hidden grid-cols-[40px_minmax(0,1fr)_96px_110px_80px] gap-3 border-b border-line bg-softtint px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-faint lg:grid">
+              <span>#</span>
+              <span>Brand / Campaign</span>
+              <span>Time Rate</span>
+              <span>Est. Runtime</span>
               <span>Status</span>
             </div>
 
             {tiers.length === 0 ? (
-              <p className="px-5 py-12 text-center text-[14px] text-muted" data-market-empty>
-                No campaigns are competing in this category yet.
-                <span className="mt-1 block text-[12px] text-faint">
-                  The first active campaign establishes the leading Time Rate.
-                </span>
-              </p>
+              <div className="px-5 py-14 text-center" data-market-empty>
+                <p className="text-[15px] font-semibold text-ink">No active campaigns yet.</p>
+                <p className="mt-1 text-[13px] text-muted">Be the first to compete for visibility.</p>
+                <Link
+                  href={cta}
+                  className="mt-5 inline-flex items-center justify-center rounded-[10px] bg-electric px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:opacity-90"
+                >
+                  Create Your Campaign
+                </Link>
+              </div>
             ) : (
               <ol className="divide-y divide-line">
                 {tiers.map((tier) => (
@@ -140,30 +131,32 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
           {leadingRate !== undefined ? (
             <p className="mt-3 text-[12px] text-faint">
               Join the top position at{' '}
-              <span className="fp-figure font-medium text-muted">{formatTimeRate(toCents(leadingRate))}</span>{' '}
+              <span className="fp-figure font-medium text-muted">{formatTimeRate(toCents(leadingRate)).replace(' /hour', '')}/h</span>{' '}
               — become sole #1 at{' '}
               <span className="fp-figure font-medium text-muted">
-                {formatTimeRate(toCents(leadingRate + 100))}
+                {formatTimeRate(toCents(leadingRate + 100)).replace(' /hour', '')}/h
               </span>
-              . Campaigns at the same rate share the same position; the highlighted one rotates
-              every 20 seconds.
+              . Equal Time Rates share the same position; the highlighted one rotates every 20 seconds.
             </p>
           ) : null}
         </div>
 
-        {/* RIGHT — informational cards (desktop ≥1280 only; tablet collapses per spec) */}
+        {/* RIGHT — informational cards */}
         <aside className="hidden space-y-5 xl:block">
           <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-            <h2 className="text-[15px] font-bold text-navy">How It Works</h2>
-            <ol className="mt-4 space-y-4">
+            <h2 className="text-[15px] font-bold text-navy">Why Advertise on FlipPeak?</h2>
+            <ul className="mt-4 space-y-4">
               {[
-                ['Set Your Time Rate', 'Your rate determines your position.'],
-                ['Fund Your Campaign', 'Add budget to keep your ad live.'],
-                ['Get More Visibility', 'Reach real people interested in what you offer.'],
-              ].map(([title, copy], index) => (
-                <li key={title} className="flex gap-3">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-soft-blue text-[12px] font-bold text-primary-blue">
-                    {index + 1}
+                ['Competitive Exposure', 'Higher Time Rate keeps you on top.'],
+                ['Real Audience', 'Reach people genuinely interested in your category.'],
+                ['Secure & Transparent', 'Powered by verified events. No hidden rules.'],
+                ['Simple and Effective', 'Set your Time Rate. We handle the rest.'],
+              ].map(([title, copy]) => (
+                <li key={title} className="flex gap-2.5">
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-soft-blue text-primary-blue">
+                    <svg viewBox="0 0 24 24" className="size-3" fill="currentColor" aria-hidden="true">
+                      <path d="M3 16h4l4-9 3 5 3-3h4v7H3z" />
+                    </svg>
                   </span>
                   <div>
                     <p className="text-[13px] font-semibold text-ink">{title}</p>
@@ -171,47 +164,26 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
                   </div>
                 </li>
               ))}
-            </ol>
-            <Link
-              href="/register"
-              className="mt-4 inline-block text-[12px] font-semibold text-primary-blue hover:underline"
-            >
-              Learn More →
-            </Link>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-            <p className="text-[13px] leading-relaxed text-muted">
-              “A fair marketplace where quality businesses get the visibility they deserve.”
-            </p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-faint">
-              — The FlipPeak Team
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-            <h2 className="text-[15px] font-bold text-navy">Ready to Compete?</h2>
-            <p className="mt-2 text-[12px] leading-relaxed text-muted">
-              Create your campaign today and start getting real results.
-            </p>
-            <Link
-              href={cta}
-              className="mt-4 inline-flex w-full items-center justify-center rounded-[10px] bg-electric px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-blue"
-            >
-              Create Campaign
-            </Link>
-            <ul className="mt-4 space-y-2 text-[12px] text-muted">
-              {['Reach your target audience', 'Control your budget', 'Real-time results'].map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <span className="flex size-4 items-center justify-center rounded-full bg-success-soft">
-                    <svg viewBox="0 0 24 24" className="size-2.5 text-success" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
-                      <path d="M5 13l4 4 10-10" />
-                    </svg>
-                  </span>
-                  {item}
-                </li>
-              ))}
             </ul>
+          </div>
+
+          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card" data-market-stats>
+            <h2 className="text-[15px] font-bold text-navy">Market Stats</h2>
+            <dl className="mt-3 space-y-3">
+              <Stat label="Active Campaigns" value={String(marketStats.competingNow)} />
+              <Stat label="Top Time Rate" value={marketStats.topTimeRate ?? '—'} />
+              <Stat label="Categories Open" value={String(marketStats.categoriesOpen)} />
+            </dl>
+          </div>
+
+          <div className="rounded-2xl border border-line bg-softtint p-6 text-center">
+            <svg viewBox="0 0 24 24" className="mx-auto size-7 text-primary-blue" fill="currentColor" aria-hidden="true">
+              <path d="M3 17h3l3-8 3 4 3-9 2 5h4v2h-5l-1-1.5L12 16l-2.4-5.2L7 19H3z" />
+            </svg>
+            <p className="mt-3 text-[13px] leading-relaxed text-muted">
+              “A higher peak for every idea.”
+            </p>
+            <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-faint">FlipPeak</p>
           </div>
         </aside>
       </div>
@@ -219,17 +191,16 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
   );
 }
 
-function CategoryItem({
-  href,
-  label,
-  isActive,
-  icon,
-}: {
-  readonly href: string;
-  readonly label: string;
-  readonly isActive: boolean;
-  readonly icon: string;
-}) {
+function Stat({ label, value }: { readonly label: string; readonly value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <dt className="text-[12px] text-muted">{label}</dt>
+      <dd className="fp-figure text-[14px] font-bold text-navy">{value}</dd>
+    </div>
+  );
+}
+
+function CategoryItem({ href, label, isActive, icon }: { readonly href: string; readonly label: string; readonly isActive: boolean; readonly icon: string }) {
   return (
     <li>
       <Link
@@ -245,6 +216,7 @@ function CategoryItem({
           <path d={categoryIconPath(icon)} />
         </svg>
         {label}
+        <span className="ml-auto opacity-50" aria-hidden="true">›</span>
       </Link>
     </li>
   );
@@ -286,8 +258,6 @@ function categoryIcon(category: string): string {
 }
 
 function categoryIconPath(icon: string): string {
-  if (icon === 'grid') {
-    return 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z';
-  }
+  if (icon === 'grid') return 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z';
   return categoryIcon(icon);
 }

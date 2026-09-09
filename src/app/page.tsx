@@ -69,7 +69,7 @@ export default async function LiveMarketPage({
         </div>
       ) : null}
       <main>
-        {/* HERO (approved reference: peak = position) */}
+        {/* HERO (approved visual: peak = visibility) */}
         <section className="relative isolate overflow-hidden" data-surface="hero">
           <Image
             src="/hero-mountains.svg"
@@ -80,56 +80,51 @@ export default async function LiveMarketPage({
             className="absolute inset-0 -z-10 object-cover"
           />
           <div
-            className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-deep/95 via-navy-deep/80 to-transparent"
+            className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-deep/95 via-navy-deep/80 to-navy-deep/30"
             aria-hidden="true"
           />
-          <div className="mx-auto flex max-w-[1400px] flex-col gap-8 px-4 py-14 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:py-20">
-            <div className="max-w-[620px]">
-              <h1 className="text-[2.25rem] font-extrabold leading-[1.05] tracking-tight text-white sm:text-[3rem] lg:text-[3.5rem]">
-                More Visibility
-                <br />
-                for <span className="text-electric">What Matters</span>
-              </h1>
-              <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-white/80">
-                A fair marketplace where your Time Rate sets your position and your Budget
-                determines how long you can hold it.
+          <div className="mx-auto flex max-w-[1400px] flex-col gap-10 px-4 py-12 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:py-16">
+            <div className="max-w-[680px]">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-electric">
+                Get seen. Grow faster.
               </p>
-              <div className="mt-6">
+              <h1 className="mt-3 text-[2.25rem] font-extrabold leading-[1.05] tracking-tight text-white sm:text-[3rem] lg:text-[3.25rem]">
+                Put Your Brand on Top
+              </h1>
+              <p className="mt-4 max-w-[56ch] text-[1.0625rem] leading-relaxed text-white/85">
+                A competitive ad marketplace. Higher Time Rate. Greater Exposure.
+              </p>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Link
                   href={principal ? '/campaigns/new' : '/register'}
-                  className="inline-flex items-center gap-2 rounded-[10px] bg-electric px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-primary-blue"
+                  className="inline-flex items-center rounded-[10px] bg-electric px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-primary-blue"
                 >
-                  Create Your Campaign
-                  <span aria-hidden="true">→</span>
+                  Start Advertising
+                </Link>
+                <Link
+                  href="#how-it-works"
+                  className="inline-flex items-center rounded-[10px] border border-white/30 px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/10"
+                >
+                  Learn How It Works
                 </Link>
               </div>
-              <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-[13px] font-medium text-white/85">
-                {[
-                  ['Transparent Ranking', 'M6 2 2 8h3v8h2V8h3L6 2z'],
-                  ['Real-Time Competition', 'M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 12v4m4-6 3 2-2 3-3-2'],
-                  ['Pay Only for Actual Time', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5h-2v6l5 3 1-2-4-2z'],
-                ].map(([label, icon]) => (
-                  <li key={label} className="flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" className="size-4 text-electric" fill="currentColor" aria-hidden="true">
-                      <path d={icon} />
-                    </svg>
-                    {label}
-                  </li>
-                ))}
-              </ul>
             </div>
 
-            {/* Metrics card: ONLY real data (master §6/§29) */}
-            {stats.competingNow > 0 && stats.topTimeRate !== null ? (
-              <div
-                className="w-full max-w-[280px] rounded-2xl border border-white/15 bg-navy-deep/70 p-5 backdrop-blur"
-                data-surface="hero-metrics"
-              >
-                <HeroMetric icon="users" label="Competing Now" value={String(stats.competingNow)} />
-                <HeroMetric icon="rate" label="Top Time Rate" value={stats.topTimeRate} />
-                <HeroMetric icon="grid" label="Categories Open" value={String(stats.categoriesOpen)} />
+            <div className="hidden shrink-0 items-end justify-end gap-8 lg:flex" data-hero-features>
+              <div className="text-right">
+                <MiniFeature label="Real Advertisers" icon="users" />
+                <MiniFeature label="Secure Payments" icon="lock" />
+                <MiniFeature label="Transparent Ranking" icon="rank" />
               </div>
-            ) : null}
+              <div className="max-w-[190px] text-right">
+                <svg viewBox="0 0 24 24" className="ml-auto size-8 text-electric" fill="currentColor" aria-hidden="true">
+                  <path d="M3 17h3l3-8 3 4 3-9 2 5h4v2h-5l-1-1.5L12 16l-2.4-5.2L7 19H3z" />
+                </svg>
+                <p className="mt-2 text-[13px] leading-snug text-white/75">
+                  “More than clicks. A higher peak for your brand.”
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -138,27 +133,25 @@ export default async function LiveMarketPage({
           serverNowMs={serverNowMs}
           activeCategory={activeCategory}
           isSignedIn={principal !== null}
+          marketStats={stats}
         />
       </main>
     </>
   );
 }
 
-function HeroMetric({ icon, label, value }: { icon: 'users' | 'rate' | 'grid'; label: string; value: string }) {
-  const paths: Record<'users' | 'rate' | 'grid', string> = {
+function MiniFeature({ label, icon }: { readonly label: string; readonly icon: 'users' | 'lock' | 'rank' }) {
+  const paths: Record<'users' | 'lock' | 'rank', string> = {
     users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0',
-    rate: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM7 13l3 3 6-7',
-    grid: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+    lock: 'M7 10V8a5 5 0 0 1 10 0v2m-11 0h12a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z',
+    rank: 'M4 19h3l3-8 3 4 3-9 2 5h2v2h-4l-1-1.2-1.6 4.9-3-4-1.7 4.3H4z',
   };
   return (
-    <div className="border-t border-white/15 py-3 first:border-t-0 first:pt-0 first:pb-3 last:pb-0">
-      <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-white/60">
-        <svg viewBox="0 0 24 24" className="size-3.5 text-electric" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path d={paths[icon]} />
-        </svg>
-        {label}
-      </div>
-      <p className="mt-1 text-[1.375rem] font-bold text-white">{value}</p>
-    </div>
+    <p className="mb-3 flex items-center justify-end gap-2 text-[13px] font-medium text-white/85">
+      {label}
+      <svg viewBox="0 0 24 24" className="size-4 text-electric" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d={paths[icon]} />
+      </svg>
+    </p>
   );
 }

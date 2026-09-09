@@ -5,30 +5,31 @@ import { useEffect, useState } from 'react';
 import { formatTimeRate, toCents } from '@/modules/economics/money';
 import { formatDuration } from '@/lib/format';
 import { msUntilNextRotation, spotlightIndex } from './rotation';
+import { tierView } from './tier-view';
 import type { MarketEntry } from './types';
 
 interface MarketTierProps {
   readonly rank: number;
-  readonly timeRateCentsPerHour: number;
   readonly members: readonly MarketEntry[];
   readonly serverNowMs: number;
   readonly initialSpotlightIndex: number;
-  readonly variant: 'leader' | 'standard';
 }
 
 /**
- * One competitive position as a compact premium row set (approved visual).
+ * One competitive position (approved visual §9-11).
  *
- * Rank is dense and never implied by visual order: the medallions are rank
- * presentation only (#1 gold, #2 silver, #3 bronze, others neutral). Spotlight
- * emphasis is a soft tint + label — never a rank change (invariant 13).
+ *  - rank is shown ONCE per tier — ties never render as separate positions;
+ *  - the spotlight campaign is the lead; the rest sit behind an accessible
+ *    disclosure ("+N tied", "Rotating spotlight every 20 seconds");
+ *  - the spotlight moves with the authoritative server clock; it never
+ *    changes rank, rate or economy (invariant 13).
  */
 export function MarketTier({
   rank,
   members,
   serverNowMs,
   initialSpotlightIndex,
-}: Omit<MarketTierProps, 'timeRateCentsPerHour' | 'variant'>) {
+}: MarketTierProps) {
   const [spotlight, setSpotlight] = useState(initialSpotlightIndex);
   const memberCount = members.length;
 
@@ -50,70 +51,85 @@ export function MarketTier({
     };
   }, [serverNowMs, memberCount]);
 
+  const view = tierView(members, spotlight % memberCount);
+  const isTie = view.tiedCount > 1;
+
   return (
-    <>
-      {members.map((member, memberIndex) => {
-        const isSpotlight = members.length > 1 && memberIndex === spotlight;
-        return (
-          <li
-            key={member.id}
-            data-spotlight={isSpotlight || undefined}
-            className={
-              isSpotlight
-                ? 'relative bg-soft-blue/50 px-4 py-3 transition-colors lg:grid lg:grid-cols-[40px_minmax(0,1fr)_96px_110px_110px_80px] lg:items-center lg:gap-3'
-                : 'relative px-4 py-3 transition-colors hover:bg-softtint lg:grid lg:grid-cols-[40px_minmax(0,1fr)_96px_110px_110px_80px] lg:items-center lg:gap-3'
-            }
-          >
-            <span className="pointer-events-none absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-electric opacity-0 transition-opacity data-spotlight:opacity-100" aria-hidden="true" />
+    <li data-tier-rank={rank} data-tier-tied={isTie || undefined} data-spotlight="" className="relative px-4 py-3 transition-colors hover:bg-softtint lg:px-5">
+      <span className="pointer-events-none absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-electric" aria-hidden="true" />
 
-            <div className="flex items-center gap-3 lg:block">
-              <RankMedal rank={rank} />
-            </div>
+      <div className="flex items-center gap-3">
+        <RankMedal rank={rank} />
 
-            <div className="flex min-w-0 items-center gap-3">
-              <Avatar name={member.title} />
-              <div className="min-w-0">
-                <p className="truncate text-[14px] font-semibold text-ink">
-                  {member.title}
-                  {isSpotlight ? (
-                    <span className="ml-2 rounded-full bg-soft-blue px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-blue">
-                      Spotlight
-                    </span>
-                  ) : null}
-                </p>
-                <p className="truncate text-[12px] text-muted">{member.summary}</p>
-              </div>
-            </div>
-
-            <span className="hidden text-right lg:block">
-              <CategoryChip label={member.categoryLabel} />
-            </span>
-
-            <span className="hidden text-right lg:block">
-              <span className="fp-figure text-[15px] font-bold text-navy">
-                {formatTimeRate(toCents(member.timeRateCentsPerHour)).replace(' /hour', '')}
-                <span className="ml-1 text-[11px] font-medium text-faint">/hour</span>
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <Avatar name={view.lead.title} />
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-semibold text-ink">
+              {view.lead.title}
+              <span className="ml-2 rounded-full bg-soft-blue px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-blue">
+                Spotlight
               </span>
-            </span>
+            </p>
+            <p className="truncate text-[12px] text-muted">{view.lead.summary}</p>
+          </div>
+        </div>
 
-            <span className="hidden lg:block">
-              <RuntimeLeft ms={member.remainingRuntimeMs} />
-            </span>
+        <span className="hidden shrink-0 sm:block">
+          <CategoryChip label={view.lead.categoryLabel} />
+        </span>
 
-            <span className="hidden lg:block">
-              <StatusBadge />
-            </span>
+        <span className="shrink-0 text-right">
+          <span className="fp-figure text-[15px] font-bold text-navy">
+            {formatTimeRate(toCents(view.lead.timeRateCentsPerHour)).replace(' /hour', '')}
+            <span className="ml-0.5 text-[11px] font-medium text-faint">/h</span>
+          </span>
+        </span>
 
-            {/* mobile second line */}
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 lg:hidden">
-              <CategoryChip label={member.categoryLabel} />
-              <RuntimeLeft ms={member.remainingRuntimeMs} />
-              <StatusBadge />
-            </div>
-          </li>
-        );
-      })}
-    </>
+        <span className="hidden shrink-0 md:block">
+          <RuntimeLeft ms={view.lead.remainingRuntimeMs} />
+        </span>
+
+        <span className="shrink-0">
+          <StatusBadge />
+        </span>
+      </div>
+
+      {isTie ? (
+        <div className="mt-2 rounded-lg bg-soft-blue/40 px-3 py-2" data-tied>
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[12px] text-primary-blue [&::-webkit-details-marker]:hidden">
+              <span>
+                {view.tiedCount} campaigns tied for position #{rank}
+                <span className="ml-2 text-muted">Rotating spotlight every 20 seconds</span>
+              </span>
+              <span className="text-[11px] opacity-70 transition-transform group-open:rotate-180">▾</span>
+            </summary>
+            <ul className="mt-2 space-y-1.5" data-tied-members>
+              {view.others.map((member) => (
+                <li key={member.id} className="flex flex-wrap items-center gap-3 rounded-md bg-surface px-2.5 py-1.5">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-soft-blue text-[10px] font-bold text-primary-blue">
+                    {rank}
+                  </span>
+                  <Avatar name={member.title} small />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{member.title}</span>
+                  <span className="hidden sm:block">
+                    <CategoryChip label={member.categoryLabel} />
+                  </span>
+                  <span className="fp-figure text-[13px] font-semibold text-navy">
+                    {formatTimeRate(toCents(member.timeRateCentsPerHour)).replace(' /hour', '')}
+                    <span className="ml-0.5 text-[10px] font-medium text-faint">/h</span>
+                  </span>
+                  <span className="hidden md:block">
+                    <RuntimeLeft ms={member.remainingRuntimeMs} />
+                  </span>
+                  <StatusBadge />
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      ) : null}
+    </li>
   );
 }
 
@@ -142,11 +158,15 @@ function Medal({ tone, label }: { readonly tone: 'gold' | 'silver' | 'bronze'; r
   );
 }
 
-function Avatar({ name }: { readonly name: string }) {
+function Avatar({ name, small }: { readonly name: string; readonly small?: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className="flex size-[42px] shrink-0 items-center justify-center rounded-lg bg-soft-blue text-[14px] font-bold text-primary-blue"
+      className={
+        small
+          ? 'flex size-6 shrink-0 items-center justify-center rounded-md bg-soft-blue text-[11px] font-bold text-primary-blue'
+          : 'flex size-[42px] shrink-0 items-center justify-center rounded-lg bg-soft-blue text-[14px] font-bold text-primary-blue'
+      }
     >
       {name.trim().slice(0, 1).toUpperCase()}
     </span>
