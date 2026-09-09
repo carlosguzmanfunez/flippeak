@@ -95,7 +95,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn, m
 
           <div className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
             <div className="hidden grid-cols-[40px_minmax(0,1fr)_96px_110px_80px] gap-3 border-b border-line bg-softtint px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-faint lg:grid">
-              <span>#</span>
+              <span>Rank</span>
               <span>Brand / Campaign</span>
               <span>Time Rate</span>
               <span>Est. Runtime</span>
