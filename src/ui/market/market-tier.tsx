@@ -18,7 +18,7 @@ interface MarketTierProps {
 }
 
 /**
- * One competitive position (Master Visual QA v4 Â§4-20): a refined row-card
+ * One competitive position (Master Visual QA v4 §4-20): a refined row-card
  * with category identity (pill/avatar/accent), aligned grid columns,
  * runtime text + presentation progress, and a Visit action. Rank is shown
  * ONCE per tier; ties keep the disclosure (same rank, never separate slots).
@@ -253,7 +253,7 @@ function TieDisclosure({
             {members.length + 1} campaigns tied for position #{rank}
             <span className="ml-2 text-muted">Rotating spotlight every 20 seconds</span>
           </span>
-          <span className="text-[11px] opacity-70 transition-transform group-open:rotate-180">â–¾</span>
+          <span className="text-[11px] opacity-70 transition-transform group-open:rotate-180">▾</span>
         </summary>
         <ul className="mt-2 space-y-1.5" data-tied-members>
           {members.map((member) => (

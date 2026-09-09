@@ -5,7 +5,8 @@ const page = await (await browser.newContext()).newPage();
 await page.goto('https://flippeak.vercel.app/');
 await page.waitForLoadState('networkidle');
 const marketText = await page.locator('[data-surface="market"]').innerText();
-console.log('MOJIBAKE IN RENDER:', /â€|â€™|â€œ|â€˜|Ã|�/.test(marketText) ? 'FOUND!' : 'NONE');
+const m = marketText.match(/â€|â€™|â€œ|â€˜|Ã|�/);
+console.log('MOJIBAKE IN RENDER:', m ? 'FOUND! idx ' + m.index + ' ctx [' + marketText.slice(Math.max(0, m.index - 30), m.index + 30).replace(/\n/g, ' /n') + ']' : 'NONE');
 const sample = await page.locator('[data-runtime-projected]').first().innerText().catch(() => '(no runtime)');
 console.log('FIRST ROW RUNTIME:', sample);
 // find any visible row text

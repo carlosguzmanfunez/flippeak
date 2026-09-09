@@ -27,7 +27,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
   return (
     <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8" data-surface="market">
       <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_290px]">
-        {/* LEFT â€” categories (real product set only) */}
+        {/* LEFT — categories (real product set only) */}
         <aside className="hidden space-y-5 lg:block">
           <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
             <h2 className="text-[13px] font-semibold text-ink">Categories</h2>
@@ -47,7 +47,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
             <div className="mt-5 border-t border-line pt-4">
               <h3 className="text-[13px] font-semibold text-ink">Filters</h3>
               <p className="mt-2 text-[12px] leading-relaxed text-muted">
-                Order is always by Time Rate â€” the only field that moves your position.
+                Order is always by Time Rate — the only field that moves your position.
               </p>
               {activeCategory !== undefined ? (
                 <Link href="/" className="mt-3 inline-block text-[12px] font-medium text-primary-blue hover:underline">
@@ -71,14 +71,14 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
           </div>
         </aside>
 
-        {/* CENTER â€” the ladder */}
+        {/* CENTER — the ladder */}
         <div className="min-w-0" id="how-it-works">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <div>
               <h2 className="text-[1.5rem] font-bold tracking-tight text-navy">Live Market</h2>
               <p className="mt-1 text-[13px] text-muted">
                 Live rankings
-                <span className="hidden sm:inline"> â€” updated with real system state.</span>
+                <span className="hidden sm:inline"> — updated with real system state.</span>
               </p>
             </div>
             <span className="text-[12px] font-medium text-faint">Sorted by Position</span>
@@ -134,7 +134,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
             <p className="mt-3 text-[12px] text-faint">
               Join the top position at{' '}
               <span className="fp-figure font-medium text-muted">{formatTimeRateCompact(toCents(leadingRate))}</span>{' '}
-              â€” become sole #1 at{' '}
+              — become sole #1 at{' '}
               <span className="fp-figure font-medium text-muted">
                 {formatTimeRateCompact(toCents(leadingRate + 100))}
               </span>
@@ -143,7 +143,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
           ) : null}
         </div>
 
-        {/* RIGHT â€” informational cards */}
+        {/* RIGHT — informational cards */}
         <aside className="hidden space-y-5 xl:block">
           <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
             <h2 className="text-[15px] font-bold text-navy">Why Advertise on FlipPeak?</h2>
@@ -174,7 +174,7 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
               <path d="M3 17h3l3-8 3 4 3-9 2 5h4v2h-5l-1-1.5L12 16l-2.4-5.2L7 19H3z" />
             </svg>
             <p className="mt-3 text-[13px] leading-relaxed text-muted">
-              â€œA higher peak for every idea.â€
+              “A higher peak for every idea.”
             </p>
             <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-faint">FlipPeak</p>
           </div>
@@ -214,7 +214,7 @@ function CategoryItem({
           <path d={visual?.icon ?? 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'} />
         </svg>
         {label}
-        <span className="ml-auto opacity-50" aria-hidden="true">â€º</span>
+        <span className="ml-auto opacity-50" aria-hidden="true">›</span>
       </Link>
     </li>
   );

@@ -166,14 +166,14 @@ function require(id: string | null): string {
 
 async function runFullCycle(deps: FundingDependencies, runId: string): Promise<void> {
   // 1. Verified funding: 1 cent is enough to demonstrate a legitimate
-  //    exhaustion in the test window (1 cent @ $101/h â‰ˆ 356 ms).
+  //    exhaustion in the test window (1 cent @ $101/h ≈ 356 ms).
   expect(await fundRun(deps, { runId, amountCents: 1 })).toEqual({ ok: true });
 
   const afterFunding = await ownedRun(runId);
   expect(afterFunding?.creditedCents).toBe(1);
   expect(afterFunding?.verifiedFundingCents).toBe(1);
 
-  // 2. Activation: DRAFT â†’ ACTIVE with an authoritative whole-ms anchor.
+  // 2. Activation: DRAFT → ACTIVE with an authoritative whole-ms anchor.
   expect(await activateRun(deps, { runId })).toEqual({ ok: true });
 
   const afterActivation = await ownedRun(runId);
@@ -281,7 +281,7 @@ async function runBoostCycle(childDraftId: string): Promise<void> {
   const newAnchorMs = after[0]!.anchor!.getTime();
   const elapsedMs = newAnchorMs - oldAnchorMs;
   expect(elapsedMs).toBeGreaterThan(0);
-  // Settlement happened at the OLD rate, exactly: rate Ã— whole ms. No cap.
+  // Settlement happened at the OLD rate, exactly: rate × whole ms. No cap.
   expect(after[0]!.consumed - oldConsumed).toBe(LIFE_RATE * elapsedMs);
 }
 

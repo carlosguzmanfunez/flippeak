@@ -105,7 +105,7 @@ async function main() {
       await page.waitForTimeout(2_500);
       console.log('captured:', e.title);
     }
-    console.log('LISTO â€” esperar webhooks y verificar mercado');
+    console.log('LISTO — esperar webhooks y verificar mercado');
   }
 
   await browser.close();
