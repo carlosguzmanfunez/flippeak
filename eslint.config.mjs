@@ -18,6 +18,7 @@ export default tseslint.config(
       'paypal-e2e.mjs',
       'ui-e2e.mjs',
       'visual-shots.mjs',
+      'qa-row-debug.mjs',
     ],
   },
   js.configs.recommended,
