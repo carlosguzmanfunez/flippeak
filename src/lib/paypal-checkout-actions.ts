@@ -30,12 +30,26 @@ export async function captureCheckoutOrderAction(formData: FormData) {
 }
 
 export async function checkpointOrderAction(formData: FormData) {
-  // Informative state read for the browser-return UX; never credits.
+  // Browser-return UX read. Capture is SERVER-side on the approved order
+  // (intent — the verified webhook remains the only credit authority). Never
+  // credits from any client path.
   const principal = await getAuthenticatedPrincipal();
   const paymentOrderId = formData.get('paymentOrderId');
   if (principal === null || typeof paymentOrderId !== 'string') {
     return { ok: false as const };
   }
   const payment = await checkoutDependencies.loadOwnedPayment(principal, paymentOrderId);
-  return payment === null ? { ok: false as const } : { ok: true as const, state: payment.state };
+  if (payment === null || payment.providerOrderId === null) {
+    return { ok: false as const };
+  }
+  if (payment.state === 'PENDING') {
+    try {
+      await checkoutDependencies.captureProviderOrder({ providerOrderId: payment.providerOrderId });
+      return { ok: true as const, state: 'CAPTURED' as const };
+    } catch {
+      // Not approved yet or provider unavailable: report the local truth.
+      return { ok: true as const, state: payment.state };
+    }
+  }
+  return { ok: true as const, state: payment.state };
 }

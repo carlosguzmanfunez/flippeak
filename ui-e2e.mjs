@@ -45,8 +45,31 @@ async function main() {
   const page = await (await browser.newContext()).newPage();
 
   if (command !== 'flow') {
-    console.log('verificación UI (resume) vía DB audit; no flow requieres estado del browser');
+    // Reuse the saved session (same browser context storage) and drive the
+    // REAL UI: runs page -> Check payment status -> capture -> reflect state.
+    const saved = JSON.parse(readFileSync('.ui-e2e-storage.json', 'utf8'));
     await browser.close();
+    const browser2 = await chromium.launch();
+    const context2 = await browser2.newContext({ storageState: saved });
+    const page2 = await context2.newPage();
+    const st = loadState();
+    await page2.goto(`${BASE}/campaigns/${st.campaignId}/runs`);
+    await page2.waitForLoadState('networkidle');
+    const hasCheck = await page2.getByRole('button', { name: /check payment status/i }).count();
+    console.log('UI has payment status control:', hasCheck > 0);
+    if (hasCheck > 0) {
+      await page2.getByRole('button', { name: /check payment status/i }).first().click();
+      await page2.waitForTimeout(3_500);
+      const surface = await page2.locator('[data-payment-state]').innerText().catch(() => '(none)');
+      console.log('UI PAYMENT STATE:', JSON.stringify(surface));
+      await page2.screenshot({ path: 'ui-e2e-resume.png' });
+    }
+    await page2.goto(`${BASE}/`);
+    await page2.waitForLoadState('networkidle');
+    const marketText = await page2.locator('main').innerText();
+    console.log('MARKET TEXTS SNIPPET:', JSON.stringify(marketText.slice(0, 250)));
+    await context2.close();
+    await browser2.close();
     return;
   }
 

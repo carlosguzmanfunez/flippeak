@@ -1,0 +1,145 @@
+{
+  "cookies": [
+    {
+      "name": "__Secure-better-auth.session_token",
+      "value": "vgnHPABF4ee86FuAATyVRI02TNYjDSAT.1kbL3zbX%2BawdMVcDJs2aMfKnRSL5wPgKr3QXxROyXx0%3D",
+      "domain": "flippeak.vercel.app",
+      "path": "/",
+      "expires": 1789516582.210425,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "enforce_policy",
+      "value": "gdpr_v2.1",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1820447791.621623,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "cookie_check",
+      "value": "yes",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1823471791.6217,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "fn_dt",
+      "value": "8B422326BR421954F",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "d_id",
+      "value": "c014d87d90cf4ee48b5d1323e02ab6b11788911790487",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1823471791.621749,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "LANG",
+      "value": "es_XC%3BHN",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1788943347.621796,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "tsrce",
+      "value": "unifiedloginnodeweb",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1789170991.621857,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "x-pp-s",
+      "value": "eyJ0IjoiMTc4ODkxMTc5MDYwNiIsImwiOiIwIiwibSI6IjEifQ",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "nsid",
+      "value": "s%3AwPyS5YmouKvhxB_Vc1IE3oJ6rzdVZ9bs.3a34jNBMye4Fi1RQ%2BWvguvA7O9W7SDvibX6Hl%2Fj07wc",
+      "domain": "www.sandbox.paypal.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ts",
+      "value": "vreXpYrS%3D1820447790%26vteXpYrS%3D1788913590%26vr%3D8373a8461a0644082e18601efc547771%26vt%3D8373a8461a0644082e18601efc547770%26vtyp%3Dnew",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1820447791.621918,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ts_c",
+      "value": "vr%3D8373a8461a0644082e18601efc547771%26vt%3D8373a8461a0644082e18601efc547770",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1820447791.621943,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "TLTSID",
+      "value": "91783681586543206135294701707621",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Strict"
+    },
+    {
+      "name": "TLTDID",
+      "value": "76644666036147051819826944059698",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1820447792.203833,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "rssk",
+      "value": "d%7DC9%40%3E%3B%3E658B8%3A%3A7%3Exqx%3E%3As%3E%7Dyf%3Ch%3F12",
+      "domain": ".paypal.com",
+      "path": "/",
+      "expires": 1788912692.211181,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    }
+  ],
+  "origins": []
+}
