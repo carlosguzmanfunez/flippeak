@@ -66,9 +66,11 @@ export function MarketTier({
           <div className="min-w-0">
             <p className="truncate text-[14px] font-semibold text-ink">
               {view.lead.title}
-              <span className="ml-2 rounded-full bg-soft-blue px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-blue">
-                Spotlight
-              </span>
+              {isTie ? (
+                <span className="ml-2 rounded-full bg-soft-blue px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-blue">
+                  Spotlight
+                </span>
+              ) : null}
             </p>
             <p className="truncate text-[12px] text-muted">{view.lead.summary}</p>
           </div>
