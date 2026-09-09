@@ -1,0 +1,40 @@
+{
+  "entries": [
+    {
+      "title": "Alpha Peak",
+      "campaignId": "36af1c5c-052e-4736-a799-9cc650d6bef7",
+      "rate": 4500,
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=28G97553TC3990016"
+    },
+    {
+      "title": "Bravo Studio",
+      "campaignId": "b024d73f-a19e-47eb-b3cd-62c2eedf3746",
+      "rate": 1800,
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=2WG25666WU5456427"
+    },
+    {
+      "title": "Charlie Fest",
+      "campaignId": "c1df5682-1ab2-4f05-b32d-a7cc57f58d74",
+      "rate": 8000,
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=2NB70414V0844000X"
+    },
+    {
+      "title": "Delta Waves",
+      "campaignId": "4407d5d3-5f97-4b56-b8e0-92541ae84bcc",
+      "rate": 1200,
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=6SN256091U065483Y"
+    },
+    {
+      "title": "Echo Arena",
+      "campaignId": "82a4f318-c24b-4eb7-b9d3-bd5babf40003",
+      "rate": 3000,
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=76P751802G925141F"
+    },
+    {
+      "title": "Foxtrot Forge",
+      "campaignId": "130d96bd-e9ac-4f8d-bb4a-4af5dbad7544",
+      "rate": 4500,
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=3M909179K5092304H"
+    }
+  ]
+}

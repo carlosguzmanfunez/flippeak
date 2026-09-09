@@ -33,8 +33,16 @@ export const checkoutDependencies: CheckoutDependencies = {
     const sdk = await paypalSdkClient();
     const request = new sdk.orders.OrdersCreateRequest();
     request.prefer('return=representation');
+    const publicBase =
+      process.env.NEXT_PUBLIC_APP_URL ?? 'https://flippeak.vercel.app';
     request.requestBody({
       intent: 'CAPTURE',
+      // Return targets only UX: the browser return never credits (ADR-014);
+      // the verified webhook remains the single financial authority.
+      application_context: {
+        return_url: `${publicBase}/?checkout=done`,
+        cancel_url: `${publicBase}/?checkout=cancelled`,
+      },
       purchase_units: [
         {
           reference_id: orderId,

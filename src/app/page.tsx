@@ -23,9 +23,9 @@ function isCategoryId(value: string | undefined): value is CategoryId {
 export default async function LiveMarketPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; checkout?: string }>;
 }) {
-  const { category } = await searchParams;
+  const { category, checkout } = await searchParams;
   const activeCategory = isCategoryId(category) ? category : undefined;
   const principal = await getAuthenticatedPrincipal();
 
@@ -53,6 +53,21 @@ export default async function LiveMarketPage({
   return (
     <>
       <SiteHeader />
+      {checkout === 'done' ? (
+        <div className="mx-auto max-w-[1400px] px-4 pt-4 sm:px-8" data-checkout-return>
+          <div className="rounded-xl border border-line bg-soft-blue/60 px-4 py-3 text-[13px] text-ink">
+            Volviste de PayPal. Tu pago se está verificando — el reconocimiento llega en cuanto el
+            webhook lo confirma. Revisa el estado en <span className="font-semibold">My Campaigns → Runs → Check payment status</span>.
+          </div>
+        </div>
+      ) : null}
+      {checkout === 'cancelled' ? (
+        <div className="mx-auto max-w-[1400px] px-4 pt-4 sm:px-8" data-checkout-return>
+          <div className="rounded-xl border border-line bg-softtint px-4 py-3 text-[13px] text-muted">
+            Checkout cancelado en PayPal. Tu run queda intacto — puedes reintentar en cualquier momento.
+          </div>
+        </div>
+      ) : null}
       <main>
         {/* HERO (approved reference: peak = position) */}
         <section className="relative isolate overflow-hidden" data-surface="hero">
