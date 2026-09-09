@@ -108,19 +108,44 @@ export default async function LiveMarketPage({
                   Learn How It Works
                 </Link>
               </div>
+
+              <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-[13px] font-medium text-white/85">
+                {[
+                  ['Real Advertisers', 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0'],
+                  ['Secure Payments', 'M7 10V8a5 5 0 0 1 10 0v2m-11 0h12a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z'],
+                  ['Transparent Ranking', 'M4 19h3l3-8 3 4 3-9 2 5h2v2h-4l-1-1.2-1.6 4.9-3-4-1.7 4.3H4z'],
+                ].map(([label, icon]) => (
+                  <li key={label} className="flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" className="size-4 text-electric" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d={icon} />
+                    </svg>
+                    {label}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <div className="hidden shrink-0 items-end justify-end gap-8 lg:flex" data-hero-features>
-              <div className="text-right">
-                <MiniFeature label="Real Advertisers" icon="users" />
-                <MiniFeature label="Secure Payments" icon="lock" />
-                <MiniFeature label="Transparent Ranking" icon="rank" />
+            {/* Market Stats — elegant glass card, real data only (approved §19) */}
+            <div className="hidden shrink-0 flex-col items-end gap-4 lg:flex">
+              <div
+                className="w-[268px] rounded-2xl border border-white/15 bg-navy-deep/70 p-5 backdrop-blur"
+                data-market-stats
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
+                  Market Stats
+                </p>
+                <dl className="mt-1 divide-y divide-white/10">
+                  <HeroStat icon="users" label="Active Campaigns" value={String(stats.competingNow)} />
+                  <HeroStat icon="rate" label="Top Time Rate" value={stats.topTimeRate ?? '—'} />
+                  <HeroStat icon="grid" label="Categories Open" value={String(stats.categoriesOpen)} />
+                </dl>
               </div>
-              <div className="max-w-[190px] text-right">
+
+              <div className="text-right">
                 <svg viewBox="0 0 24 24" className="ml-auto size-8 text-electric" fill="currentColor" aria-hidden="true">
                   <path d="M3 17h3l3-8 3 4 3-9 2 5h4v2h-5l-1-1.5L12 16l-2.4-5.2L7 19H3z" />
                 </svg>
-                <p className="mt-2 text-[13px] leading-snug text-white/75">
+                <p className="mt-2 max-w-[200px] text-[13px] leading-snug text-white/75">
                   “More than clicks. A higher peak for your brand.”
                 </p>
               </div>
@@ -140,18 +165,21 @@ export default async function LiveMarketPage({
   );
 }
 
-function MiniFeature({ label, icon }: { readonly label: string; readonly icon: 'users' | 'lock' | 'rank' }) {
-  const paths: Record<'users' | 'lock' | 'rank', string> = {
+function HeroStat({ icon, label, value }: { readonly icon: 'users' | 'rate' | 'grid'; readonly label: string; readonly value: string }) {
+  const iconPaths: Record<'users' | 'rate' | 'grid', string> = {
     users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0',
-    lock: 'M7 10V8a5 5 0 0 1 10 0v2m-11 0h12a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z',
-    rank: 'M4 19h3l3-8 3 4 3-9 2 5h2v2h-4l-1-1.2-1.6 4.9-3-4-1.7 4.3H4z',
+    rate: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM7 13l3 3 6-7',
+    grid: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
   };
   return (
-    <p className="mb-3 flex items-center justify-end gap-2 text-[13px] font-medium text-white/85">
-      {label}
-      <svg viewBox="0 0 24 24" className="size-4 text-electric" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d={paths[icon]} />
-      </svg>
-    </p>
+    <div className="flex items-center justify-between gap-4 py-3">
+      <dt className="flex items-center gap-2 text-[12px] text-white/70">
+        <svg viewBox="0 0 24 24" className="size-4 text-electric" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d={iconPaths[icon]} />
+        </svg>
+        {label}
+      </dt>
+      <dd className="fp-figure text-[16px] font-bold text-white">{value}</dd>
+    </div>
   );
 }
