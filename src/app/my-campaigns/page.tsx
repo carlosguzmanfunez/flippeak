@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -9,7 +11,7 @@ import { CATEGORY_LABELS } from '@/config/domain-config';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'My campaigns — FlipPeak',
+  title: 'My campaigns â€” FlipPeak',
 };
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-GB', {
@@ -73,7 +75,7 @@ export default async function MyCampaignsPage() {
                   </p>
                   <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <p className="text-[0.6875rem] text-faint">
-                      {CATEGORY_LABELS[campaign.category]} · {campaign.subtype}
+                      {CATEGORY_LABELS[campaign.category]} Â· {campaign.subtype}
                     </p>
                     <span className="text-[0.75rem]">
                       <Link
@@ -82,7 +84,7 @@ export default async function MyCampaignsPage() {
                       >
                         Run
                       </Link>
-                      <span className="px-2 text-faint">·</span>
+                      <span className="px-2 text-faint">Â·</span>
                       <Link
                         href={`/campaigns/${campaign.id}/runs`}
                         className="text-muted transition-colors hover:text-ink"

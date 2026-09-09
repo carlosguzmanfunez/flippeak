@@ -31,5 +31,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # The Phase 1 foundation builds without a database connection.
+          # Builds never run queries: the pool initializes lazily. The URL is a
+          # placeholder for the import-time wiring (auth adapter); production
+          # builds of this repo never need the real database.
           NEXT_PUBLIC_APP_URL: http://localhost:3000
+          DATABASE_URL: postgresql://build:build@localhost:5432/flippeak

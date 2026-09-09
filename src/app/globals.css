@@ -16,15 +16,27 @@
   --color-accent-soft: var(--fp-accent-soft);
   --color-leader: var(--fp-leader);
   --color-success: var(--fp-success);
+  --color-success-soft: var(--fp-success-soft);
+  --color-gold: var(--fp-gold);
+  --color-silver: var(--fp-silver);
+  --color-bronze: var(--fp-bronze);
+  --color-soft-blue: var(--fp-soft-blue);
+  --color-navy: var(--fp-navy);
+  --color-electric: var(--fp-electric-blue);
+  --color-softtint: var(--fp-soft-tint);
+
   --color-warning: var(--fp-warning);
   --color-danger: var(--fp-danger);
 
-  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --shadow-card: var(--fp-shadow-card);
+  --shadow-raised: var(--fp-shadow-raised);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {

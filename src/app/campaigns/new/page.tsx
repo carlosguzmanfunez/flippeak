@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
@@ -7,7 +9,7 @@ import { CampaignForm } from '@/ui/campaigns/campaign-form';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'New campaign — FlipPeak',
+  title: 'New campaign â€” FlipPeak',
 };
 
 /**

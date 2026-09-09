@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
@@ -6,7 +8,7 @@ import { decideAdminAccess } from '@/modules/auth/access';
 import { SiteHeader } from '@/ui/shell/site-header';
 
 export const metadata: Metadata = {
-  title: 'Admin — FlipPeak',
+  title: 'Admin â€” FlipPeak',
 };
 
 /**

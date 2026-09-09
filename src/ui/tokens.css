@@ -1,34 +1,44 @@
 /*
- * FlipPeak design tokens — single source of truth.
+ * FlipPeak design tokens — single source of truth (MASTER VISUAL, approved).
  *
- * Every colour, type step and radius used in the product resolves to a value
- * defined here. Components must not introduce raw hex values.
- *
- * src/app/globals.css maps these into Tailwind's --color-* namespace so the
- * utilities stay short (bg-canvas, text-ink, border-line). This file stays
- * framework-free so design references can consume it directly.
+ * Light premium marketplace (SaaS premium + marketplace + competitive ranking).
+ * Every colour, type step, radius and shadow resolves here. Components must
+ * not introduce raw values. src/app/globals.css maps these into Tailwind's
+ * --color-* namespace.
  */
 
 :root {
+  /* --- palette (approved reference) ----------------------------------- */
+  --fp-navy: #071b3a;
+  --fp-navy-deep: #041226;
+  --fp-primary-blue: #0b63f6;
+  --fp-electric-blue: #1683ff;
+  --fp-soft-blue: #eaf3ff;
+  --fp-success: #16a36a;
+  --fp-success-soft: #e7f8f0;
+  --fp-gold: #f6c84c;
+  --fp-silver: #c8d0da;
+  --fp-bronze: #c9824a;
+  --fp-danger: #d94a4a;
+  --fp-warning: #e7a63b;
+
   /* --- surfaces ------------------------------------------------------- */
-  --fp-background: #0a0e1a;
-  --fp-surface: #111726;
-  --fp-surface-raised: #182034;
-  --fp-border: #232c42;
-  --fp-border-strong: #33405e;
+  --fp-background: #f7f9fc;
+  --fp-surface: #ffffff;
+  --fp-surface-raised: #ffffff;
+  --fp-border: #e2e8f0;
+  --fp-border-strong: #cbd5e1;
+  --fp-soft-tint: #f1f5fb;
 
   /* --- type ----------------------------------------------------------- */
-  --fp-text-primary: #f2efe9;
-  --fp-text-secondary: #8e97ad;
-  --fp-text-faint: #5d6780;
+  --fp-text-primary: #0b1736;
+  --fp-text-secondary: #62708a;
+  --fp-text-faint: #8290a8;
 
-  /* --- meaning -------------------------------------------------------- */
-  --fp-accent: #6d5df6;
-  --fp-accent-soft: #a79bff;
-  --fp-leader: #d9c08a;
-  --fp-success: #4e9e7a;
-  --fp-warning: #d08a3e;
-  --fp-danger: #d2564f;
+  /* --- legacy aliases kept for existing components -------------------- */
+  --fp-accent: var(--fp-primary-blue);
+  --fp-accent-soft: var(--fp-primary-blue);
+  --fp-leader: var(--fp-gold);
 
   /* --- type scale ----------------------------------------------------- */
   --fp-size-micro: 0.6875rem;
@@ -40,11 +50,13 @@
   --fp-size-display: 2rem;
 
   /* --- rhythm --------------------------------------------------------- */
-  --fp-radius-sm: 4px;
-  --fp-radius-md: 8px;
-  --fp-radius-lg: 14px;
+  --fp-radius-sm: 8px;
+  --fp-radius-md: 12px;
+  --fp-radius-lg: 16px;
   --fp-rail: 3px;
-  --fp-focus-ring: 2px solid #6d5df6;
+  --fp-focus-ring: 2px solid var(--fp-primary-blue);
+  --fp-shadow-card: 0 2px 8px rgba(7, 27, 58, 0.06);
+  --fp-shadow-raised: 0 4px 16px rgba(7, 27, 58, 0.1);
 
   /* --- space scale (4pt rhythm) --------------------------------------- */
   --fp-space-1: 4px;

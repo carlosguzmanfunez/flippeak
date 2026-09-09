@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { Instrument_Sans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 
-const instrumentSans = Instrument_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
-  variable: '--font-instrument-sans',
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={instrumentSans.variable}>
+    <html lang="en" className={inter.variable}>
       <body className="min-h-dvh bg-canvas font-sans text-ink antialiased">{children}</body>
     </html>
   );
