@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 
@@ -12,6 +12,7 @@ import { boostRunAction } from '@/modules/payments/boost';
 import type { BoostDependencies } from '@/modules/payments/boost';
 import { createRunAgain } from '@/modules/campaigns/create-campaign-run';
 import type { AuthenticatedPrincipal } from '@/modules/auth/principal';
+import { purgeOwner, seedCampaign, seedOwner, seedRun } from '@/test/integration-fixtures';
 
 /**
  * Runtime lifecycle verification (provider = 'internal', audited test path).
@@ -32,11 +33,14 @@ import type { AuthenticatedPrincipal } from '@/modules/auth/principal';
 
 const CYCLE_ENABLED = process.env.RUN_LF_CYCLE === '1';
 
-const OWNER: AuthenticatedPrincipal = {
-  // Exact as stored: verified against the campaign row before running.
-  userId: '0UYjthBgrItKQcbxEt2TvKWEsow02W5t',
-  role: 'ADVERTISER',
-};
+/**
+ * Patch A3: the owner is seeded per run instead of being a hardcoded production
+ * user id, and the parent DRAFT run it needs is created here too. Everything
+ * this suite touches is created in `beforeAll` and removed in `afterAll`, so it
+ * no longer asserts anything about rows that happen to exist in the shared
+ * database.
+ */
+let OWNER: AuthenticatedPrincipal = { userId: '', role: 'ADVERTISER' };
 
 const CENT_MS_PER_CENT = 3_600_000;
 const LIFE_RATE = 10_100; // $101/hour, the audited runtime campaign rate
@@ -125,6 +129,21 @@ const exhaustedWithLedger = async (previousIsNull: boolean): Promise<string | nu
 };
 
 describe.skipIf(!CYCLE_ENABLED)('4D/4E lifecycle - provider=internal, audited test path', () => {
+  beforeAll(async () => {
+    OWNER = { userId: await seedOwner(), role: 'ADVERTISER' };
+    const campaignId = await seedCampaign(OWNER.userId);
+    await seedRun({
+      campaignId,
+      timeRateCentsPerHour: LIFE_RATE,
+      status: 'DRAFT',
+      creditedCents: 0,
+    });
+  });
+
+  afterAll(async () => {
+    await purgeOwner(OWNER.userId);
+  });
+
   it(
     'phases 1-3: full cycle, Run Again and Boost, without state manipulation',
     { timeout: 30_000 },
