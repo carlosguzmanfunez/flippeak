@@ -45,6 +45,15 @@ export const paymentEventState = pgEnum('payment_event_state', [
   'ORPHAN_CAPTURE',
   'NO_ACTIVATION',
   'REJECTED',
+  /**
+   * A verified capture whose credit could not be applied to its run (the run is
+   * EXHAUSTED). PayPal already took real money, so the capture must be recorded
+   * and reconciled by hand — it is never dropped and never credited as if it had
+   * been applied, and the run must not revive (ADR-014 §6). Terminal: a
+   * redelivery of the same event id is absorbed, so the event does not sit in
+   * PENDING_RETRY forever while a human decides.
+   */
+  'CAPTURED_UNAPPLIED',
 ]);
 
 /** Exact-number domain (ADR-014): floor((2^53 - 1) / 3_600_000). */

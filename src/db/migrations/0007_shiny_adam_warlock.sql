@@ -1,0 +1,1 @@
+ALTER TYPE "public"."payment_event_state" ADD VALUE 'CAPTURED_UNAPPLIED';

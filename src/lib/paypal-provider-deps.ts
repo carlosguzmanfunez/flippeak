@@ -31,6 +31,41 @@ function isUniqueViolation(error: unknown): boolean {
 }
 
 /**
+ * Sentinel thrown INSIDE the credit transaction when the run cannot accept the
+ * credit (it is EXHAUSTED). It exists only to abort the unit of work and reach
+ * the catch block below; it is never surfaced to a client.
+ *
+ * Recognised by `instanceof` OR by the sentinel text, because a driver or the
+ * transaction wrapper may rethrow a wrapped error — the same defensive shape
+ * `isUniqueViolation` already uses. The capture id is carried only so the
+ * failure can be traced to the exact provider capture.
+ */
+const CREDIT_NOT_APPLICABLE = 'flippeak:credit_not_applicable';
+
+export class CreditNotApplicableError extends Error {
+  constructor(captureId: string) {
+    super(`${CREDIT_NOT_APPLICABLE} capture=${captureId}`);
+    this.name = 'CreditNotApplicableError';
+  }
+}
+
+function isCreditNotApplicable(error: unknown): boolean {
+  if (error instanceof CreditNotApplicableError) return true;
+  if (typeof error !== 'object' || error === null) return false;
+  const candidate = error as { message?: unknown; cause?: unknown };
+  if (typeof candidate.message === 'string' && candidate.message.includes(CREDIT_NOT_APPLICABLE)) {
+    return true;
+  }
+  if (typeof candidate.cause === 'object' && candidate.cause !== null) {
+    const cause = candidate.cause as { message?: unknown };
+    if (typeof cause.message === 'string' && cause.message.includes(CREDIT_NOT_APPLICABLE)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Best-effort activation after a capture (ADR-014 §6): money and activation
  * are separate. Conditional UPDATE with an atomic NOT EXISTS — zero affected
  * rows mean blocked (another ACTIVE in the campaign, or the run not DRAFT),
@@ -170,10 +205,19 @@ export const paypalWebhookDeps: WebhookFlowDeps = {
           verifiedAt: sql`now()`,
         });
 
-        await tx
+        // The credited_cents bump must actually happen. When the run cannot take
+        // the credit (EXHAUSTED — it must not revive, and no retroactive credit
+        // is granted), zero rows are affected; throwing here rolls back the whole
+        // unit of work, so the ledger row is not written and the order is not
+        // marked CAPTURED. Nothing is ever left half-applied.
+        const credited = await tx
           .update(campaignRun)
           .set({ creditedCents: sql`${campaignRun.creditedCents} + ${amountCents}` })
           .where(and(eq(campaignRun.id, order.runId), ne(campaignRun.status, 'EXHAUSTED')));
+
+        if ((credited.rowCount ?? 0) === 0) {
+          throw new CreditNotApplicableError(captureId);
+        }
 
         await tx
           .update(paymentOrder)
@@ -187,6 +231,10 @@ export const paypalWebhookDeps: WebhookFlowDeps = {
       const activated = await activateAfterCredit(orderId);
       return activated ? 'CREDITED' : 'NO_ACTIVATION';
     } catch (error) {
+      // A verified capture the run cannot accept: the money is real, so it is
+      // reported to the flow, which records it for reconciliation. It is never
+      // credited, never dropped, and never marked as if it had been applied.
+      if (isCreditNotApplicable(error)) return 'CAPTURED_UNAPPLIED' as const;
       if (isUniqueViolation(error)) return 'CAPTURE_EXISTS' as const;
       throw error;
     }

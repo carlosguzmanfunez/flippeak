@@ -30,7 +30,7 @@ export type WebhookInput = {
 
 export type ProcessOutcome =
   | { readonly ok: true; readonly action: ProcessingPlan['action'] }
-  | { readonly ok: false; readonly reason: 'UNPARSEABLE' | 'REJECTED' };
+  | { readonly ok: false; readonly reason: 'UNPARSEABLE' | 'REJECTED' | 'CAPTURED_UNAPPLIED' };
 
 export type WebhookFlowDeps = {
   /**
@@ -40,7 +40,14 @@ export type WebhookFlowDeps = {
   readonly insertEventIfAbsent: (input: WebhookInput) => Promise<boolean>;
   /** Current processing state of an existing event (null when absent). */
   readonly loadEventState: (eventId: string) => Promise<
-    'PENDING_RETRY' | 'PROCESSED' | 'DUPLICATE_CAPTURE' | 'ORPHAN_CAPTURE' | 'NO_ACTIVATION' | 'REJECTED' | null
+    | 'PENDING_RETRY'
+    | 'PROCESSED'
+    | 'DUPLICATE_CAPTURE'
+    | 'ORPHAN_CAPTURE'
+    | 'NO_ACTIVATION'
+    | 'REJECTED'
+    | 'CAPTURED_UNAPPLIED'
+    | null
   >;
   /**
    * Local order by capture id first, then by order id (ADR-014).
@@ -64,16 +71,20 @@ export type WebhookFlowDeps = {
    * never lost on activation failure (NO_ACTIVATION state, ADR-014 §6).
    * Resolves 'CAPTURE_EXISTS' when a duplicate capture id is detected inside
    * the transaction (level-2 hard guard — another order already owns it).
+   * Resolves 'CAPTURED_UNAPPLIED' when the credit cannot be applied at all (the
+   * run is EXHAUSTED): the unit of work is rolled back so nothing is written as
+   * if the credit had landed, and the verified capture is recorded for explicit
+   * reconciliation instead.
    */
   readonly creditAndActivate: (input: {
     readonly orderId: string;
     readonly captureId: string;
     readonly amountCents: number;
-  }) => Promise<'CREDITED' | 'NO_ACTIVATION' | 'CAPTURE_EXISTS'>;
+  }) => Promise<'CREDITED' | 'NO_ACTIVATION' | 'CAPTURE_EXISTS' | 'CAPTURED_UNAPPLIED'>;
   readonly recordOrphan: (eventId: string, detail: string) => Promise<void>;
   readonly recordVerdict: (
     eventId: string,
-    verdict: 'PROCESSED' | 'DUPLICATE_CAPTURE' | 'REJECTED' | 'RECORD_REFUND',
+    verdict: 'PROCESSED' | 'DUPLICATE_CAPTURE' | 'REJECTED' | 'RECORD_REFUND' | 'CAPTURED_UNAPPLIED',
     detail?: string,
   ) => Promise<void>;
 };
@@ -85,7 +96,16 @@ export type WebhookFlowDeps = {
  * provider resend of the SAME event id re-enters the flow instead of being
  * skipped, and the idempotency levels keep the money safe.
  */
-const TERMINAL_VERDICTS = new Set(['PROCESSED', 'DUPLICATE_CAPTURE', 'REJECTED', 'NO_ACTIVATION']);
+const TERMINAL_VERDICTS = new Set([
+  'PROCESSED',
+  'DUPLICATE_CAPTURE',
+  'REJECTED',
+  'NO_ACTIVATION',
+  // A capture we cannot apply is terminal on purpose: the money is already
+  // taken, so it is recorded once for a human to reconcile rather than left
+  // re-entering the flow (or sitting in PENDING_RETRY) forever.
+  'CAPTURED_UNAPPLIED',
+]);
 
 export async function processVerifiedEvent(
   deps: WebhookFlowDeps,
@@ -151,6 +171,18 @@ export async function processVerifiedEvent(
       if (outcome === 'CAPTURE_EXISTS') {
         await deps.recordVerdict(input.providerEventId, 'DUPLICATE_CAPTURE');
         return { ok: true, action: 'CAPTURE_DUPLICATE' };
+      }
+      if (outcome === 'CAPTURED_UNAPPLIED') {
+        // Verified money the run cannot accept (EXHAUSTED). The credit unit of
+        // work was rolled back, so nothing was written as if it had landed. The
+        // capture is recorded — with everything a reconciliation needs — under a
+        // verdict that is never PROCESSED, and the run does not revive.
+        await deps.recordVerdict(
+          input.providerEventId,
+          'CAPTURED_UNAPPLIED',
+          `capture=${captureId} amountCents=${amount} order=${order.id} run=${order.runStatus}`,
+        );
+        return { ok: false, reason: 'CAPTURED_UNAPPLIED' };
       }
       await deps.recordVerdict(input.providerEventId, 'PROCESSED');
       void activationAllowed(order.runStatus);

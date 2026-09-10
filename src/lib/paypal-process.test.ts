@@ -147,3 +147,69 @@ describe('processVerifiedEvent — approval and verdicts', () => {
     expect(deps.creditAndActivate).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('processVerifiedEvent — CAPTURED_UNAPPLIED (verified money the run cannot take)', () => {
+  // The bug this closes: a verified capture arriving on an EXHAUSTED run used to
+  // be recorded as PROCESSED while the credit was silently discarded. The money
+  // is real, so it must be recorded for reconciliation and never presented as
+  // applied.
+  const unapplied = () =>
+    makeDeps(
+      { creditAndActivate: vi.fn().mockResolvedValue('CAPTURED_UNAPPLIED') },
+      localOrder({ state: 'APPROVED', runStatus: 'EXHAUSTED' }),
+    );
+
+  it('is never reported as a successful credit', async () => {
+    const deps = unapplied();
+    expect(await processVerifiedEvent(deps, captureCompleted)).toEqual({
+      ok: false,
+      reason: 'CAPTURED_UNAPPLIED',
+    });
+  });
+
+  it('records the reconciliation verdict instead of PROCESSED', async () => {
+    const deps = unapplied();
+    await processVerifiedEvent(deps, captureCompleted);
+
+    expect(deps.recordVerdict).toHaveBeenCalledTimes(1);
+    expect(deps.recordVerdict).toHaveBeenCalledWith(
+      'evt-cap-1',
+      'CAPTURED_UNAPPLIED',
+      expect.stringContaining('capture=cap-1'),
+    );
+    expect(deps.recordVerdict).not.toHaveBeenCalledWith('evt-cap-1', 'PROCESSED');
+  });
+
+  it('persists everything a reconciliation needs: capture, amount, order and run state', async () => {
+    const deps = unapplied();
+    await processVerifiedEvent(deps, captureCompleted);
+
+    const detail = vi.mocked(deps.recordVerdict).mock.calls[0]?.[2] ?? '';
+    expect(detail).toContain('capture=cap-1');
+    expect(detail).toContain('amountCents=10000');
+    expect(detail).toContain('order=order-1');
+    expect(detail).toContain('run=EXHAUSTED');
+  });
+
+  it('does not touch any other effect (no approval, no orphan)', async () => {
+    const deps = unapplied();
+    await processVerifiedEvent(deps, captureCompleted);
+    expect(deps.markApproved).not.toHaveBeenCalled();
+    expect(deps.recordOrphan).not.toHaveBeenCalled();
+  });
+
+  it('is TERMINAL: a redelivery is absorbed and never re-enters the money path', async () => {
+    // An explicit reconciliation state, not PENDING_RETRY: the event must not sit
+    // re-entering the flow forever while a human decides.
+    const deps = makeDeps({
+      insertEventIfAbsent: vi.fn().mockResolvedValue(false),
+      loadEventState: vi.fn().mockResolvedValue('CAPTURED_UNAPPLIED' as const),
+    });
+    expect(await processVerifiedEvent(deps, captureCompleted)).toEqual({
+      ok: true,
+      action: 'EVENT_ALREADY_PROCESSED',
+    });
+    expect(deps.creditAndActivate).not.toHaveBeenCalled();
+    expect(deps.recordVerdict).not.toHaveBeenCalled();
+  });
+});
