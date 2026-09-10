@@ -81,6 +81,34 @@ describe('the two databases must be different', () => {
     expect(environment.DATABASE_URL).toBe(INTEGRATION);
   });
 
+  it('refuses the pooled and direct endpoints of the SAME branch', () => {
+    // The defect this closes: two different connection strings that reach
+    // identical data. The old string comparison accepted it; the branch
+    // comparison must not.
+    const direct = DEV.replace('-pooler', '');
+    expect(identifyDatabase(direct).fingerprint).not.toBe(identifyDatabase(DEV).fingerprint);
+    expect(identifyDatabase(direct).branchId).toBe(identifyDatabase(DEV).branchId);
+
+    const environment = env({
+      DATABASE_URL: DEV,
+      [INTEGRATION_DATABASE_URL]: direct,
+      RUN_HARDEN: '1',
+    });
+    expect(() => enforceIntegrationDatabase(environment)).toThrow(/same Neon branch/);
+  });
+
+  it('does not over-block: different branches sharing a database name are allowed', () => {
+    const environment = env({
+      DATABASE_URL: DEV,
+      [INTEGRATION_DATABASE_URL]: INTEGRATION,
+      RUN_RECONCILE: '1',
+    });
+    // Both call their database `neondb`; only the branch may decide.
+    expect(identifyDatabase(DEV).database).toBe(identifyDatabase(INTEGRATION).database);
+    expect(identifyDatabase(DEV).branchId).not.toBe(identifyDatabase(INTEGRATION).branchId);
+    expect(() => enforceIntegrationDatabase(environment)).not.toThrow();
+  });
+
   it('also accepts a distinct branch reached through a direct endpoint', () => {
     // Same shape as the real topology discovery: one environment uses the pooled
     // endpoint, another the direct one. Different strings, different branches.
@@ -102,6 +130,14 @@ describe('no message may ever echo a connection string', () => {
     {
       case: 'malformed integration URL',
       values: { DATABASE_URL: DEV, [INTEGRATION_DATABASE_URL]: 'not-a-url', RUN_HARDEN: '1' },
+    },
+    {
+      case: 'same branch through a different endpoint',
+      values: {
+        DATABASE_URL: DEV,
+        [INTEGRATION_DATABASE_URL]: DEV.replace('-pooler', ''),
+        RUN_HARDEN: '1',
+      },
     },
   ])('$case: the thrown message leaks no credential', ({ values }) => {
     const environment = env(values);

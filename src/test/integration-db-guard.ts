@@ -108,11 +108,29 @@ export function enforceIntegrationDatabase(env: EnvLike = process.env): void {
 
   const development = env.DATABASE_URL?.trim();
   const identity = identifyDatabase(integration);
-  if (development !== undefined && development.length > 0 && development === integration) {
-    throw new Error(
-      `${INTEGRATION_DATABASE_URL} and DATABASE_URL are the same string ` +
-        `(branch ${identity.branchId}). Integration must use an isolated database.`,
-    );
+
+  if (development !== undefined && development.length > 0) {
+    // String equality is not sufficient. The pooled and direct endpoints of one
+    // Neon branch are *different connection strings that reach exactly the same
+    // data*, so a naive comparison happily accepts production as "integration"
+    // as long as the pooling suffix differs. The branch is what must differ.
+    if (development === integration) {
+      throw new Error(
+        `${INTEGRATION_DATABASE_URL} and DATABASE_URL are the same string ` +
+          `(branch ${identity.branchId}). Integration must use an isolated database.`,
+      );
+    }
+
+    if (isPostgresUrl(development)) {
+      const developmentIdentity = identifyDatabase(development);
+      if (developmentIdentity.branchId === identity.branchId) {
+        throw new Error(
+          `${INTEGRATION_DATABASE_URL} and DATABASE_URL reach the same Neon branch ` +
+            `(${identity.branchId}) through different endpoints. A pooled and a direct ` +
+            `endpoint are one database; integration must use a different branch.`,
+        );
+      }
+    }
   }
 
   env.DATABASE_URL = integration;
