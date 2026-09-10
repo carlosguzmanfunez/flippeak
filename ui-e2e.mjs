@@ -42,16 +42,29 @@ function qaPassword() {
   return password;
 }
 
+/**
+ * The database the TARGET DEPLOYMENT writes to — deliberately never DATABASE_URL.
+ *
+ * These harnesses drive a deployed application, so the rows they look up were
+ * created in *that* deployment's database. After the Neon isolation work
+ * DATABASE_URL points at development, so defaulting to it would make the harness
+ * query the wrong database and fail with a misleading "row not found".
+ */
+function qaTargetDatabaseUrl() {
+  loadEnvLocal();
+  const url = process.env.QA_TARGET_DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      'Set QA_TARGET_DATABASE_URL in .env.local to the database the target deployment writes to ' +
+        '(see .env.example). It is never defaulted from DATABASE_URL.',
+    );
+  }
+  return url;
+}
+
 async function resolveCampaignId(email) {
   const { neon } = await import('@neondatabase/serverless');
-  const fs = await import('node:fs');
-  for (const line of fs.readFileSync('.env.local', 'utf8').split('\n')) {
-    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
-    if (m && process.env[m[1]] === undefined) {
-      process.env[m[1]] = m[2].trim().replace(/^"([\s\S]*)"$/, '$1').replace(/^'([\s\S]*)'$/, '$1');
-    }
-  }
-  const sql = neon(process.env.DATABASE_URL);
+  const sql = neon(qaTargetDatabaseUrl());
   const rows = await sql`
     select c.id from campaign c join "user" u on u.id = c.owner_user_id
     where u.email = ${email} and c.title = 'Live QA Campaign' order by c.created_at desc limit 1`;

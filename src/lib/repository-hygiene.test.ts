@@ -95,4 +95,24 @@ describe('the environment template documents the QA variables without values', (
     expect(envExample).toMatch(/^INTEGRATION_DATABASE_URL=$/m);
     expect(envExample).not.toMatch(/INTEGRATION_DATABASE_URL=.+/);
   });
+
+  it('declares the QA target database variable empty', () => {
+    expect(envExample).toMatch(/^QA_TARGET_DATABASE_URL=$/m);
+    expect(envExample).not.toMatch(/QA_TARGET_DATABASE_URL=.+/);
+  });
+});
+
+describe('QA harnesses name their target database explicitly (Patch A3)', () => {
+  const harnesses = ['../../ui-e2e.mjs', '../../qa-ladder.mjs', '../../qa-visual-5.mjs'];
+
+  it.each(harnesses)('%s reads QA_TARGET_DATABASE_URL', (script) => {
+    expect(read(script)).toContain('process.env.QA_TARGET_DATABASE_URL');
+  });
+
+  it.each(harnesses)('%s never falls back to DATABASE_URL', (script) => {
+    // These harnesses write through a deployed application and read the database
+    // directly. Once DATABASE_URL points at development, a fallback would query
+    // the wrong database and fail with a misleading "row not found".
+    expect(read(script)).not.toContain('process.env.DATABASE_URL');
+  });
 });

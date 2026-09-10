@@ -32,6 +32,21 @@ function qaCredentials() {
   return { email, password };
 }
 
+// The database the TARGET DEPLOYMENT writes to — deliberately never DATABASE_URL.
+// This harness drives https://flippeak.vercel.app, so its rows live in that
+// deployment's database; after the Neon isolation work DATABASE_URL points at
+// development and a silent fallback would query the wrong database.
+function qaTargetDatabaseUrl() {
+  const url = process.env.QA_TARGET_DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      'Set QA_TARGET_DATABASE_URL in .env.local to the database the target deployment writes to ' +
+        '(see .env.example). It is never defaulted from DATABASE_URL.',
+    );
+  }
+  return url;
+}
+
 const LOAD = [
   { title: 'Lumen Live Radio', category: 'music-and-artists', subtype: 'Musician', rate: 400, summary: 'Live music discovery - curated sessions for every mood.', destinationUrl: 'https://open.spotify.com', amount: 1 },
   { title: 'Pixel Gauntlet', category: 'gaming', subtype: 'Studio', rate: 1100, summary: 'Indie game tournaments streamed live 24/7.', destinationUrl: 'https://www.twitch.tv', amount: 1 },
@@ -59,7 +74,7 @@ async function getCampaignId(title) {
       process.env[m[1]] = m[2].trim().replace(/^"([\s\S]*)"$/, '$1').replace(/^'([\s\S]*)'$/, '$1');
     }
   }
-  const sql = neon(process.env.DATABASE_URL);
+  const sql = neon(qaTargetDatabaseUrl());
   const rows = await sql`
     select c.id from campaign c join "user" u on u.id = c.owner_user_id
     where u.email = ${email} and c.title = ${title}
