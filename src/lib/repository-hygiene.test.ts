@@ -88,4 +88,11 @@ describe('the environment template documents the QA variables without values', (
     expect(envExample).not.toMatch(/QA_E2E_EMAIL=.+/);
     expect(envExample).not.toMatch(/QA_E2E_PASSWORD=.+/);
   });
+
+  it('declares the integration database variable empty', () => {
+    // Patch A3: the template must name it (so the guard is discoverable) and
+    // must never carry a value.
+    expect(envExample).toMatch(/^INTEGRATION_DATABASE_URL=$/m);
+    expect(envExample).not.toMatch(/INTEGRATION_DATABASE_URL=.+/);
+  });
 });
