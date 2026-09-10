@@ -76,9 +76,8 @@ export function MarketTier({ rank, members, serverNowMs, initialSpotlightIndex }
       className={`group relative rounded-xl border bg-surface px-4 py-3 transition-all hover:border-line-strong hover:shadow-card ${
         isTop ? 'border-line-strong shadow-card' : 'border-line'
       } ${memberCount > 1 ? 'mb-2' : ''}`}
-      style={{ marginBottom: 6 }}
     >
-      <div className={`flex flex-wrap items-center gap-3 lg:grid lg:items-center ${MARKET_GRID_CLASSES}`}>
+      <div className={`flex flex-wrap items-center gap-2 lg:grid lg:items-center ${MARKET_GRID_CLASSES}`}>
         <div>
           <RankMedal rank={rank} />
         </div>
@@ -152,7 +151,7 @@ function Avatar({ entry, small }: { readonly entry: MarketEntry; readonly small?
   return (
     <span
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-lg font-bold text-white ${small ? 'size-6 text-[11px]' : 'size-[42px] text-[14px]'}`}
+      className={`flex shrink-0 items-center justify-center rounded-lg font-bold text-white ${small ? 'size-6 text-[11px]' : 'size-9 text-[13px]'}`}
       style={{ backgroundColor: visual.accent }}
     >
       {entry.title.trim().slice(0, 1).toUpperCase()}
@@ -164,11 +163,11 @@ function CategoryCell({ member }: { readonly member: MarketEntry }) {
   const visual = categoryVisual(member.categoryLabel);
   return (
     <span
-      className="inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-semibold"
+      className="inline-flex max-w-full items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-semibold"
       style={{ backgroundColor: visual.soft, color: visual.dark }}
     >
-      <span className="size-1.5 rounded-full" style={{ backgroundColor: visual.accent }} aria-hidden="true" />
-      {visual.label}
+      <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: visual.accent }} aria-hidden="true" />
+      <span className="truncate">{visual.label}</span>
     </span>
   );
 }
@@ -178,7 +177,7 @@ function RuntimeCell({ member, projected }: { readonly member: MarketEntry; read
   const ratio = runtimeProgressRatio(projected, initial);
   const visual = categoryVisual(member.categoryLabel);
   return (
-    <div className="w-[165px]">
+    <div className="w-full min-w-0">
       <span className="inline-flex items-center gap-1.5 text-[12px] text-muted" data-runtime-projected>
         <svg viewBox="0 0 24 24" className="size-3.5 text-faint" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <circle cx="12" cy="12" r="9" />
@@ -226,10 +225,10 @@ function VisitButton({ entry }: { readonly entry: MarketEntry }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Visit ${entry.title}`}
-      className="inline-flex items-center gap-1 rounded-[9px] border border-[#D8E3F2] bg-white px-3 py-1.5 text-[12px] font-medium text-primary-blue transition-colors hover:border-primary-blue hover:bg-soft-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-blue"
+      className="inline-flex items-center gap-1 rounded-[9px] border border-[#D8E3F2] bg-white px-2 py-1.5 text-[11px] font-medium text-primary-blue transition-colors hover:border-primary-blue hover:bg-soft-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-blue"
     >
       Visit
-      <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="size-2.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <path d="M7 17 17 7M9 7h8v8" />
       </svg>
     </a>

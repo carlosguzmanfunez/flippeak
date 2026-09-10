@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { categoryVisual, runtimeProgressRatio, safeDestinationUrl } from './category-visuals';
+import { MARKET_GRID_CLASSES, categoryVisual, runtimeProgressRatio, safeDestinationUrl } from './category-visuals';
 
 describe('category visuals (v4 §3-4 tests)', () => {
   it('known categories return their palette', () => {
@@ -27,6 +27,12 @@ describe('category visuals (v4 §3-4 tests)', () => {
       expect(visual.soft).toMatch(/^#[0-9A-F]{6}$/i);
       expect(visual.icon.length).toBeGreaterThan(5);
     }
+  });
+});
+
+describe('market grid contract (hotfix #1)', () => {
+  it('exposes 7 aligned columns: rank / brand / category / rate / runtime / status / action', () => {
+    expect(MARKET_GRID_CLASSES).toBe('lg:grid-cols-[40px_minmax(0,1fr)_104px_92px_126px_78px_60px]');
   });
 });
 

@@ -66,8 +66,12 @@ export { CATEGORY_VISUALS };
 /**
  * Shared market grid (header AND rows use the exact same template — v4 §6).
  * Column widths: rank / campaign / category / rate / runtime / status / visit.
+ * The fixed columns are balanced so the flexible Brand/Campaign column keeps
+ * enough width for [avatar] + title + summary inside the market center
+ * (~690-760px: 1024/1366/1440 with the 240px + 290px side panels). Using
+ * larger fixed columns collapsed minmax(0,1fr) to ~40px (hotfix #1/#2).
  */
-export const MARKET_GRID_CLASSES = 'lg:grid-cols-[56px_minmax(0,1fr)_140px_125px_165px_105px_82px]';
+export const MARKET_GRID_CLASSES = 'lg:grid-cols-[40px_minmax(0,1fr)_104px_92px_126px_78px_60px]';
 
 /**
  * Presentation-only runtime ratio: remaining / initial runtime at the current

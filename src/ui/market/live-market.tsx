@@ -94,11 +94,11 @@ export function LiveMarket({ entries, serverNowMs, activeCategory, isSignedIn }:
           </nav>
 
           <div className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
-            <div className={`hidden gap-3 border-b border-line bg-softtint px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-faint lg:grid ${MARKET_GRID_CLASSES}`}>
+            <div className={`hidden gap-2 border-b border-line bg-softtint px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-faint lg:grid ${MARKET_GRID_CLASSES}`}>
               <span>Rank</span>
-              <span>Brand / Campaign</span>
+              <span className="whitespace-nowrap">Brand / Campaign</span>
               <span>Category</span>
-              <span>Time Rate</span>
+              <span className="text-right">Time Rate</span>
               <span>Est. Runtime</span>
               <span>Status</span>
               <span>Action</span>
