@@ -20,6 +20,18 @@ try {
 const BASE = 'https://flippeak.vercel.app';
 const STATE = '.qa-visual-5.json';
 
+// QA credentials are NEVER committed: they come from .env.local (see .env.example).
+function qaCredentials() {
+  const email = process.env.QA_E2E_EMAIL;
+  const password = process.env.QA_E2E_PASSWORD;
+  if (!email || !password) {
+    throw new Error(
+      'Set QA_E2E_EMAIL and QA_E2E_PASSWORD in .env.local (see .env.example). QA credentials are never committed.',
+    );
+  }
+  return { email, password };
+}
+
 const LOAD = [
   { title: 'Lumen Live Radio', category: 'music-and-artists', subtype: 'Musician', rate: 400, summary: 'Live music discovery - curated sessions for every mood.', destinationUrl: 'https://open.spotify.com', amount: 1 },
   { title: 'Pixel Gauntlet', category: 'gaming', subtype: 'Studio', rate: 1100, summary: 'Indie game tournaments streamed live 24/7.', destinationUrl: 'https://www.twitch.tv', amount: 1 },
@@ -29,14 +41,16 @@ const LOAD = [
 ];
 
 async function signIn(page) {
+  const { email, password } = qaCredentials();
   await page.goto(`${BASE}/login`);
-  await page.getByLabel(/email/i).fill('qa15-1788911108995@flippeak.dev');
-  await page.getByLabel(/password/i).fill('FlipPeakQA15!');
+  await page.getByLabel(/email/i).fill(email);
+  await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /sign in|login/i }).click();
   await page.waitForTimeout(1_500);
 }
 
 async function getCampaignId(title) {
+  const { email } = qaCredentials();
   const { neon } = await import('@neondatabase/serverless');
   const fs = await import('node:fs');
   for (const line of fs.readFileSync('.env.local', 'utf8').split('\n')) {
@@ -48,7 +62,7 @@ async function getCampaignId(title) {
   const sql = neon(process.env.DATABASE_URL);
   const rows = await sql`
     select c.id from campaign c join "user" u on u.id = c.owner_user_id
-    where u.email = 'qa15-1788911108995@flippeak.dev' and c.title = ${title}
+    where u.email = ${email} and c.title = ${title}
     order by c.created_at desc limit 1`;
   return rows[0]?.id;
 }

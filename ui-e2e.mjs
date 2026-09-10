@@ -12,6 +12,36 @@ const state = () => {
 };
 const save = (data) => writeFileSync(STATE, JSON.stringify(data, null, 2));
 
+// QA credentials are NEVER committed: the password comes from .env.local (see
+// .env.example). The account itself is registered by this script at run time,
+// so only the password is fixed.
+let envLoaded = false;
+function loadEnvLocal() {
+  if (envLoaded) return;
+  envLoaded = true;
+  try {
+    for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
+      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+      if (m && process.env[m[1]] === undefined) {
+        process.env[m[1]] = m[2].trim().replace(/^"([\s\S]*)"$/, '$1').replace(/^'([\s\S]*)'$/, '$1');
+      }
+    }
+  } catch {
+    // .env.local absent: ambient environment.
+  }
+}
+
+function qaPassword() {
+  loadEnvLocal();
+  const password = process.env.QA_E2E_PASSWORD;
+  if (!password) {
+    throw new Error(
+      'Set QA_E2E_PASSWORD in .env.local (see .env.example). QA credentials are never committed.',
+    );
+  }
+  return password;
+}
+
 async function resolveCampaignId(email) {
   const { neon } = await import('@neondatabase/serverless');
   const fs = await import('node:fs');
@@ -113,7 +143,7 @@ async function main() {
     await page.goto(`${BASE}/register`);
     await page.getByLabel(/name/i).fill('QA Driver');
     await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel(/password/i).fill('FlipPeakQA15!');
+    await page.getByLabel(/password/i).fill(qaPassword());
     await page.getByRole('button', { name: /create account|sign up/i }).click();
     await page.waitForURL('**/login**', { timeout: 20_000 }).catch(() => {});
     if (!page.url().includes('/login')) {
@@ -125,7 +155,7 @@ async function main() {
   await step(page, 'login-after-register', async () => {
     await page.goto(`${BASE}/login`);
     await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel(/password/i).fill('FlipPeakQA15!');
+    await page.getByLabel(/password/i).fill(qaPassword());
     await page.getByRole('button', { name: /sign in|login/i }).click();
     await page.waitForTimeout(1_500);
     if (page.url().includes('/login')) {

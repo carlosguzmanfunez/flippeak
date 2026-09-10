@@ -12,7 +12,7 @@ next-env.d.ts
 # testing
 coverage/
 
-# environment ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â never commit real secrets
+# environment — never commit real secrets
 .env
 .env.*
 !.env.example
@@ -35,18 +35,13 @@ npm-debug.log*
 yarn-error.log*
 *.log
 
-.vercel
-.env*
+# QA / e2e harness artifacts (generated; session state must never be committed)
+.qa-*.json
 .paypal-e2e-state.json
-
-# UI e2e harness artifacts
+.ui-e2e-*.json
+ui-e2e-*.json
 ui-e2e-*.png
 qa-probe.png
-ui-e2e-storage.json
-.ui-e2e-state.json
 
 # Visual QA snapshots (generated)
 shots/
-
-# QA ladder harness
-.qa-ladder.json

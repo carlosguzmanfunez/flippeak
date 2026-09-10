@@ -7,6 +7,35 @@ import { writeFileSync, readFileSync } from 'node:fs';
 const BASE = 'https://flippeak.vercel.app';
 const STATE = '.qa-ladder.json';
 
+// QA credentials are NEVER committed: they come from .env.local (see .env.example).
+let envLoaded = false;
+function loadEnvLocal() {
+  if (envLoaded) return;
+  envLoaded = true;
+  try {
+    for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
+      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+      if (m && process.env[m[1]] === undefined) {
+        process.env[m[1]] = m[2].trim().replace(/^"([\s\S]*)"$/, '$1').replace(/^'([\s\S]*)'$/, '$1');
+      }
+    }
+  } catch {
+    // .env.local absent: ambient environment.
+  }
+}
+
+function qaCredentials() {
+  loadEnvLocal();
+  const email = process.env.QA_E2E_EMAIL;
+  const password = process.env.QA_E2E_PASSWORD;
+  if (!email || !password) {
+    throw new Error(
+      'Set QA_E2E_EMAIL and QA_E2E_PASSWORD in .env.local (see .env.example). QA credentials are never committed.',
+    );
+  }
+  return { email, password };
+}
+
 const LOAD = [
   ['Alpha Peak', 'gaming', 'Indie Game', 4_500],
   ['Bravo Studio', 'creators', 'Video Creator', 1_800],
@@ -17,14 +46,16 @@ const LOAD = [
 ];
 
 async function signIn(page) {
+  const { email, password } = qaCredentials();
   await page.goto(`${BASE}/login`);
-  await page.getByLabel(/email/i).fill('qa15-1788911108995@flippeak.dev');
-  await page.getByLabel(/password/i).fill('FlipPeakQA15!');
+  await page.getByLabel(/email/i).fill(email);
+  await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /sign in|login/i }).click();
   await page.waitForTimeout(1_500);
 }
 
 async function getCampaignId(title) {
+  const { email } = qaCredentials();
   const { neon } = await import('@neondatabase/serverless');
   const fs = await import('node:fs');
   for (const line of fs.readFileSync('.env.local', 'utf8').split('\n')) {
@@ -36,7 +67,7 @@ async function getCampaignId(title) {
   const sql = neon(process.env.DATABASE_URL);
   const rows = await sql`
     select c.id from campaign c join "user" u on u.id = c.owner_user_id
-    where u.email = 'qa15-1788911108995@flippeak.dev' and c.title = ${title}
+    where u.email = ${email} and c.title = ${title}
     order by c.created_at desc limit 1`;
   return rows[0]?.id;
 }
