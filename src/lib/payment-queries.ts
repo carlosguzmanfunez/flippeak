@@ -12,7 +12,7 @@ import { db } from '@/db/client';
 
 export type RunPaymentView = {
   readonly orderId: string;
-  readonly state: 'PENDING' | 'APPROVED' | 'CAPTURED' | 'ABANDONED' | 'REFUNDED';
+  readonly state: 'PENDING' | 'APPROVED' | 'CAPTURED' | 'ABANDONED' | 'REFUNDED' | 'REVERSED';
   readonly amountCents: number;
   readonly providerCaptureId: string | null;
   readonly createdAt: Date;

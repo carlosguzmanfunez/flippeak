@@ -1,0 +1,1513 @@
+{
+  "id": "868b6118-6978-4f80-bf75-46f7b7e387f8",
+  "prevId": "73714fad-564e-495f-80a4-60995ff648de",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.account": {
+      "name": "account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "account_issuer_accountId_uidx": {
+          "name": "account_issuer_accountId_uidx",
+          "columns": [
+            {
+              "expression": "issuer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "account_userId_idx": {
+          "name": "account_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "account_user_id_user_id_fk": {
+          "name": "account_user_id_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "session_userId_idx": {
+          "name": "session_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "session_token_unique": {
+          "name": "session_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ADVERTISER'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.verification": {
+      "name": "verification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "verification_identifier_idx": {
+          "name": "verification_identifier_idx",
+          "columns": [
+            {
+              "expression": "identifier",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.campaign": {
+      "name": "campaign",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destination_url": {
+          "name": "destination_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "campaign_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtype": {
+          "name": "subtype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "campaign_owner_user_id_idx": {
+          "name": "campaign_owner_user_id_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "campaign_owner_user_id_user_id_fk": {
+          "name": "campaign_owner_user_id_user_id_fk",
+          "tableFrom": "campaign",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "campaign_subtype_not_blank": {
+          "name": "campaign_subtype_not_blank",
+          "value": "length(btrim(\"campaign\".\"subtype\")) > 0"
+        },
+        "campaign_title_valid": {
+          "name": "campaign_title_valid",
+          "value": "length(btrim(\"campaign\".\"title\")) BETWEEN 1 AND 50\n        AND strpos(\"campaign\".\"title\", chr(10)) = 0\n        AND strpos(\"campaign\".\"title\", chr(13)) = 0"
+        },
+        "campaign_summary_valid": {
+          "name": "campaign_summary_valid",
+          "value": "length(btrim(\"campaign\".\"summary\")) BETWEEN 1 AND 140\n        AND strpos(\"campaign\".\"summary\", chr(10)) = 0\n        AND strpos(\"campaign\".\"summary\", chr(13)) = 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.campaign_run": {
+      "name": "campaign_run",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_run_id": {
+          "name": "previous_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "campaign_run_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'DRAFT'"
+        },
+        "time_rate_cents_per_hour": {
+          "name": "time_rate_cents_per_hour",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credited_cents": {
+          "name": "credited_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "consumed_cent_ms": {
+          "name": "consumed_cent_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rate_anchor_at": {
+          "name": "rate_anchor_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destination_url": {
+          "name": "destination_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "campaign_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtype": {
+          "name": "subtype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "campaign_run_campaign_id_idx": {
+          "name": "campaign_run_campaign_id_idx",
+          "columns": [
+            {
+              "expression": "campaign_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "campaign_run_one_active_per_campaign_uidx": {
+          "name": "campaign_run_one_active_per_campaign_uidx",
+          "columns": [
+            {
+              "expression": "campaign_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"campaign_run\".\"status\" = 'ACTIVE'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "campaign_run_campaign_id_campaign_id_fk": {
+          "name": "campaign_run_campaign_id_campaign_id_fk",
+          "tableFrom": "campaign_run",
+          "tableTo": "campaign",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "campaign_run_previous_run_fk": {
+          "name": "campaign_run_previous_run_fk",
+          "tableFrom": "campaign_run",
+          "tableTo": "campaign_run",
+          "columnsFrom": [
+            "previous_run_id",
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id",
+            "campaign_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "campaign_run_id_campaign_id_uk": {
+          "name": "campaign_run_id_campaign_id_uk",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "campaign_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "campaign_run_subtype_not_blank": {
+          "name": "campaign_run_subtype_not_blank",
+          "value": "length(btrim(\"campaign_run\".\"subtype\")) > 0"
+        },
+        "campaign_run_time_rate_band": {
+          "name": "campaign_run_time_rate_band",
+          "value": "\"campaign_run\".\"time_rate_cents_per_hour\" BETWEEN 100 AND 100000"
+        },
+        "campaign_run_time_rate_whole_dollars": {
+          "name": "campaign_run_time_rate_whole_dollars",
+          "value": "\"campaign_run\".\"time_rate_cents_per_hour\" % 100 = 0"
+        },
+        "campaign_run_credited_non_negative": {
+          "name": "campaign_run_credited_non_negative",
+          "value": "\"campaign_run\".\"credited_cents\" >= 0"
+        },
+        "campaign_run_credited_within_exact_domain": {
+          "name": "campaign_run_credited_within_exact_domain",
+          "value": "\"campaign_run\".\"credited_cents\" <= 2501999792"
+        },
+        "campaign_run_consumed_non_negative": {
+          "name": "campaign_run_consumed_non_negative",
+          "value": "\"campaign_run\".\"consumed_cent_ms\" >= 0"
+        },
+        "campaign_run_consumed_within_credit": {
+          "name": "campaign_run_consumed_within_credit",
+          "value": "\"campaign_run\".\"consumed_cent_ms\" <= \"campaign_run\".\"credited_cents\" * 3600000"
+        },
+        "campaign_run_anchor_matches_status": {
+          "name": "campaign_run_anchor_matches_status",
+          "value": "(\"campaign_run\".\"status\" = 'DRAFT') = (\"campaign_run\".\"rate_anchor_at\" IS NULL)"
+        },
+        "campaign_run_no_self_reference": {
+          "name": "campaign_run_no_self_reference",
+          "value": "\"campaign_run\".\"previous_run_id\" IS NULL OR \"campaign_run\".\"previous_run_id\" <> \"campaign_run\".\"id\""
+        },
+        "campaign_run_title_valid": {
+          "name": "campaign_run_title_valid",
+          "value": "length(btrim(\"campaign_run\".\"title\")) BETWEEN 1 AND 50\n        AND strpos(\"campaign_run\".\"title\", chr(10)) = 0\n        AND strpos(\"campaign_run\".\"title\", chr(13)) = 0"
+        },
+        "campaign_run_summary_valid": {
+          "name": "campaign_run_summary_valid",
+          "value": "length(btrim(\"campaign_run\".\"summary\")) BETWEEN 1 AND 140\n        AND strpos(\"campaign_run\".\"summary\", chr(10)) = 0\n        AND strpos(\"campaign_run\".\"summary\", chr(13)) = 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.run_funding": {
+      "name": "run_funding",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "funding_cents": {
+          "name": "funding_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_event_id": {
+          "name": "provider_event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verified": {
+          "name": "verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "run_funding_provider_event_uidx": {
+          "name": "run_funding_provider_event_uidx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "run_funding_run_idx": {
+          "name": "run_funding_run_idx",
+          "columns": [
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "run_funding_run_id_campaign_run_id_fk": {
+          "name": "run_funding_run_id_campaign_run_id_fk",
+          "tableFrom": "run_funding",
+          "tableTo": "campaign_run",
+          "columnsFrom": [
+            "run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "run_funding_amount_positive": {
+          "name": "run_funding_amount_positive",
+          "value": "\"run_funding\".\"funding_cents\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.payment_event": {
+      "name": "payment_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "payment_id": {
+          "name": "payment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_event_id": {
+          "name": "provider_event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "processing_state": {
+          "name": "processing_state",
+          "type": "payment_event_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING_RETRY'"
+        },
+        "failure_detail": {
+          "name": "failure_detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signature_verified": {
+          "name": "signature_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "payment_event_provider_event_uidx": {
+          "name": "payment_event_provider_event_uidx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payment_event_payment_idx": {
+          "name": "payment_event_payment_idx",
+          "columns": [
+            {
+              "expression": "payment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "payment_event_payment_id_payment_order_id_fk": {
+          "name": "payment_event_payment_id_payment_order_id_fk",
+          "tableFrom": "payment_event",
+          "tableTo": "payment_order",
+          "columnsFrom": [
+            "payment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.payment_order": {
+      "name": "payment_order",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "payment_order_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "application_state": {
+          "name": "application_state",
+          "type": "payment_application_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'USD'"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'paypal'"
+        },
+        "provider_order_id": {
+          "name": "provider_order_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider_capture_id": {
+          "name": "provider_capture_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "payment_order_provider_order_uidx": {
+          "name": "payment_order_provider_order_uidx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_order_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payment_order_provider_capture_uidx": {
+          "name": "payment_order_provider_capture_uidx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_capture_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payment_order_run_idx": {
+          "name": "payment_order_run_idx",
+          "columns": [
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "payment_order_run_id_campaign_run_id_fk": {
+          "name": "payment_order_run_id_campaign_run_id_fk",
+          "tableFrom": "payment_order",
+          "tableTo": "campaign_run",
+          "columnsFrom": [
+            "run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "payment_order_amount_positive": {
+          "name": "payment_order_amount_positive",
+          "value": "\"payment_order\".\"amount_cents\" > 0"
+        },
+        "payment_order_amount_exact_domain": {
+          "name": "payment_order_amount_exact_domain",
+          "value": "\"payment_order\".\"amount_cents\" <= 2501999792"
+        },
+        "payment_order_currency_usd_only": {
+          "name": "payment_order_currency_usd_only",
+          "value": "\"payment_order\".\"currency\" = 'USD'"
+        },
+        "payment_order_capture_id_with_captured_state": {
+          "name": "payment_order_capture_id_with_captured_state",
+          "value": "(\"payment_order\".\"state\" in ('PENDING', 'APPROVED', 'ABANDONED')) = (\"payment_order\".\"provider_capture_id\" is null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.payment_refund": {
+      "name": "payment_refund",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "payment_order_id": {
+          "name": "payment_order_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'paypal'"
+        },
+        "provider_refund_id": {
+          "name": "provider_refund_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "payment_refund_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'REQUESTED'"
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credited_reduction_cents": {
+          "name": "credited_reduction_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "non_capacity_refund_cents": {
+          "name": "non_capacity_refund_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cause": {
+          "name": "cause",
+          "type": "payment_refund_cause",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "detail": {
+          "name": "detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_detail": {
+          "name": "failure_detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "payment_refund_provider_refund_uidx": {
+          "name": "payment_refund_provider_refund_uidx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_refund_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payment_refund_one_open_per_order_uidx": {
+          "name": "payment_refund_one_open_per_order_uidx",
+          "columns": [
+            {
+              "expression": "payment_order_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"payment_refund\".\"state\" in ('REQUESTED', 'PENDING')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payment_refund_order_idx": {
+          "name": "payment_refund_order_idx",
+          "columns": [
+            {
+              "expression": "payment_order_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payment_refund_run_idx": {
+          "name": "payment_refund_run_idx",
+          "columns": [
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "payment_refund_payment_order_id_payment_order_id_fk": {
+          "name": "payment_refund_payment_order_id_payment_order_id_fk",
+          "tableFrom": "payment_refund",
+          "tableTo": "payment_order",
+          "columnsFrom": [
+            "payment_order_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "payment_refund_run_id_campaign_run_id_fk": {
+          "name": "payment_refund_run_id_campaign_run_id_fk",
+          "tableFrom": "payment_refund",
+          "tableTo": "campaign_run",
+          "columnsFrom": [
+            "run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "payment_refund_amount_positive": {
+          "name": "payment_refund_amount_positive",
+          "value": "\"payment_refund\".\"amount_cents\" > 0"
+        },
+        "payment_refund_non_negative": {
+          "name": "payment_refund_non_negative",
+          "value": "(\"payment_refund\".\"credited_reduction_cents\" is null or \"payment_refund\".\"credited_reduction_cents\" >= 0)\n          and (\"payment_refund\".\"non_capacity_refund_cents\" is null or \"payment_refund\".\"non_capacity_refund_cents\" >= 0)"
+        },
+        "payment_refund_no_effect_before_completion": {
+          "name": "payment_refund_no_effect_before_completion",
+          "value": "\"payment_refund\".\"state\" = 'COMPLETED'\n          or (\"payment_refund\".\"credited_reduction_cents\" is null\n              and \"payment_refund\".\"non_capacity_refund_cents\" is null\n              and \"payment_refund\".\"cause\" is null\n              and \"payment_refund\".\"completed_at\" is null)"
+        },
+        "payment_refund_completed_is_complete": {
+          "name": "payment_refund_completed_is_complete",
+          "value": "\"payment_refund\".\"state\" <> 'COMPLETED'\n          or (\"payment_refund\".\"credited_reduction_cents\" is not null\n              and \"payment_refund\".\"non_capacity_refund_cents\" is not null\n              and \"payment_refund\".\"cause\" is not null\n              and \"payment_refund\".\"completed_at\" is not null)"
+        },
+        "payment_refund_decomposition": {
+          "name": "payment_refund_decomposition",
+          "value": "\"payment_refund\".\"credited_reduction_cents\" is null\n          or \"payment_refund\".\"credited_reduction_cents\" + \"payment_refund\".\"non_capacity_refund_cents\" = \"payment_refund\".\"amount_cents\""
+        },
+        "payment_refund_never_applied_releases_nothing": {
+          "name": "payment_refund_never_applied_releases_nothing",
+          "value": "\"payment_refund\".\"cause\" is distinct from 'NEVER_APPLIED' or \"payment_refund\".\"credited_reduction_cents\" = 0"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.user_role": {
+      "name": "user_role",
+      "schema": "public",
+      "values": [
+        "ADVERTISER",
+        "ADMIN"
+      ]
+    },
+    "public.campaign_category": {
+      "name": "campaign_category",
+      "schema": "public",
+      "values": [
+        "creators",
+        "music-and-artists",
+        "events",
+        "gaming",
+        "apps",
+        "ai",
+        "tech",
+        "startups",
+        "ecommerce",
+        "entertainment",
+        "education",
+        "other"
+      ]
+    },
+    "public.campaign_run_status": {
+      "name": "campaign_run_status",
+      "schema": "public",
+      "values": [
+        "DRAFT",
+        "ACTIVE",
+        "EXHAUSTED"
+      ]
+    },
+    "public.payment_application_state": {
+      "name": "payment_application_state",
+      "schema": "public",
+      "values": [
+        "APPLIED",
+        "UNAPPLIED"
+      ]
+    },
+    "public.payment_event_state": {
+      "name": "payment_event_state",
+      "schema": "public",
+      "values": [
+        "PENDING_RETRY",
+        "PROCESSED",
+        "DUPLICATE_CAPTURE",
+        "ORPHAN_CAPTURE",
+        "NO_ACTIVATION",
+        "REJECTED",
+        "CAPTURED_UNAPPLIED",
+        "CAPTURE_PENDING",
+        "CAPTURE_DENIED",
+        "APPROVAL_REVERSED",
+        "REFUND_PENDING",
+        "REFUND_FAILED",
+        "REFUND_RECORDED",
+        "CAPTURE_REVERSED",
+        "UNSUPPORTED"
+      ]
+    },
+    "public.payment_order_state": {
+      "name": "payment_order_state",
+      "schema": "public",
+      "values": [
+        "PENDING",
+        "APPROVED",
+        "CAPTURED",
+        "ABANDONED",
+        "REFUNDED",
+        "REVERSED"
+      ]
+    },
+    "public.payment_refund_cause": {
+      "name": "payment_refund_cause",
+      "schema": "public",
+      "values": [
+        "NEVER_APPLIED",
+        "SERVED_EXPOSURE"
+      ]
+    },
+    "public.payment_refund_state": {
+      "name": "payment_refund_state",
+      "schema": "public",
+      "values": [
+        "REQUESTED",
+        "PENDING",
+        "COMPLETED",
+        "FAILED"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

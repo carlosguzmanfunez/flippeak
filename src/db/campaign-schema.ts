@@ -185,6 +185,13 @@ export const campaignRun = pgTable(
 
     // Accounting invariants (ADR-011, ADR-012).
     check('campaign_run_credited_non_negative', sql`${table.creditedCents} >= 0`),
+    // The exact-number domain (ADR-014) as structure: the same representation
+    // ceiling `payment_order_amount_exact_domain` uses. Written out as a literal
+    // for the same reason the enums above are — a schema value is a historical
+    // artifact — and pinned to MAX_FUND_AMOUNT_CENTS by campaign-schema.test.ts.
+    // This is a representation limit, never a commercial one: the $5–$5 000
+    // policy stays in config and is enforced at the boundaries.
+    check('campaign_run_credited_within_exact_domain', sql`${table.creditedCents} <= 2501999792`),
     check('campaign_run_consumed_non_negative', sql`${table.consumedCentMs} >= 0`),
     // Settled consumption can never exceed what was credited, so a run at rest
     // never holds a negative balance.

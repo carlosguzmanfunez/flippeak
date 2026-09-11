@@ -6,6 +6,7 @@ import { SUMMARY_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/modules/campaigns/campai
 import type { CampaignRunStatus } from '@/modules/campaigns/campaign-run';
 
 import { campaign, campaignCategory, campaignRun, campaignRunStatus } from './campaign-schema';
+import { MAX_FUND_AMOUNT_CENTS } from './payment-schema';
 import { user } from './auth-schema';
 
 /**
@@ -393,8 +394,19 @@ describe('deferred concerns are absent from the schema', () => {
         'campaign_run_consumed_non_negative',
         'campaign_run_consumed_within_credit',
         'campaign_run_anchor_matches_status',
+        // B2: the exact-number ceiling as structure.
+        'campaign_run_credited_within_exact_domain',
       ].sort(),
     );
+  });
+
+  it('pins the exactness ceiling to the representation limit it mirrors', () => {
+    // The CHECK is written out as a literal (a schema value is a historical
+    // artifact, and a bind parameter is not valid in a CHECK), so the drift guard
+    // is this assertion: the literal must equal MAX_FUND_AMOUNT_CENTS.
+    const ceilingCheck = runConfig.checks.find((c) => c.name === 'campaign_run_credited_within_exact_domain');
+    expect(ceilingCheck).toBeDefined();
+    expect(dialect.sqlToQuery(ceilingCheck!.value).sql).toContain(String(MAX_FUND_AMOUNT_CENTS));
   });
 
   it('places no LIKE constraint on destination_url', () => {

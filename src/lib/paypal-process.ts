@@ -4,6 +4,15 @@ import {
   planProcessing,
 } from '@/modules/payments/paypal/order-state';
 import type { ParsedEvent, ProcessingPlan } from '@/modules/payments/paypal/order-state';
+import type { paymentEventState, paymentOrderState } from '@/db/payment-schema';
+
+/**
+ * The order and event vocabularies are DERIVED from the schema enums rather than
+ * restated. A migration that adds a value then widens these unions automatically
+ * instead of leaving the flow silently narrower than the database.
+ */
+type OrderState = (typeof paymentOrderState.enumValues)[number];
+type EventProcessingState = (typeof paymentEventState.enumValues)[number];
 
 /**
  * Verified webhook processing flow (Phase 10, ADR-014).
@@ -39,16 +48,7 @@ export type WebhookFlowDeps = {
    */
   readonly insertEventIfAbsent: (input: WebhookInput) => Promise<boolean>;
   /** Current processing state of an existing event (null when absent). */
-  readonly loadEventState: (eventId: string) => Promise<
-    | 'PENDING_RETRY'
-    | 'PROCESSED'
-    | 'DUPLICATE_CAPTURE'
-    | 'ORPHAN_CAPTURE'
-    | 'NO_ACTIVATION'
-    | 'REJECTED'
-    | 'CAPTURED_UNAPPLIED'
-    | null
-  >;
+  readonly loadEventState: (eventId: string) => Promise<EventProcessingState | null>;
   /**
    * Local order by capture id first, then by order id (ADR-014).
    * Receives the ALREADY PARSED event so the normalized ids are the single
@@ -56,7 +56,7 @@ export type WebhookFlowDeps = {
    */
   readonly loadOrder: (event: ParsedEvent) => Promise<{
     readonly id: string;
-    readonly state: 'PENDING' | 'APPROVED' | 'CAPTURED' | 'ABANDONED' | 'REFUNDED';
+    readonly state: OrderState;
     readonly amountCents: number;
     readonly currency: string;
     readonly providerCaptureId: string | null;
@@ -84,7 +84,8 @@ export type WebhookFlowDeps = {
   readonly recordOrphan: (eventId: string, detail: string) => Promise<void>;
   readonly recordVerdict: (
     eventId: string,
-    verdict: 'PROCESSED' | 'DUPLICATE_CAPTURE' | 'REJECTED' | 'RECORD_REFUND' | 'CAPTURED_UNAPPLIED',
+    /** `RECORD_REFUND` is a flow-level intent mapped to a stored verdict. */
+    verdict: EventProcessingState | 'RECORD_REFUND',
     detail?: string,
   ) => Promise<void>;
 };

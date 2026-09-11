@@ -57,6 +57,27 @@
                         "when":  1789021389668,
                         "tag":  "0007_shiny_adam_warlock",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  8,
+                        "version":  "7",
+                        "when":  1789119812241,
+                        "tag":  "0008_supreme_magik",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  9,
+                        "version":  "7",
+                        "when":  1789119836687,
+                        "tag":  "0009_clean_living_mummy",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  10,
+                        "version":  "7",
+                        "when":  1789119872540,
+                        "tag":  "0010_omniscient_zarek",
+                        "breakpoints":  true
                     }
                 ]
 }

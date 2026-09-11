@@ -109,7 +109,13 @@ function parseAmountCents(value: string): number | null {
 }
 
 export type LocalOrderSnapshot = {
-  readonly state: 'PENDING' | 'APPROVED' | 'CAPTURED' | 'ABANDONED' | 'REFUNDED';
+  /**
+   * The domain's own vocabulary of normalised financial states. It mirrors
+   * `payment_order_state` but is declared here on purpose: domain modules do not
+   * import the persistence layer. A schema test pins the two together, so a
+   * migration that adds a value fails that test instead of drifting.
+   */
+  readonly state: 'PENDING' | 'APPROVED' | 'CAPTURED' | 'ABANDONED' | 'REFUNDED' | 'REVERSED';
   readonly amountCents: number;
   readonly currency: string;
   readonly providerCaptureId: string | null;
