@@ -155,9 +155,9 @@ export const paymentOrder = pgTable(
       sql`(${table.state} in ('PENDING', 'APPROVED', 'ABANDONED')) = (${table.providerCaptureId} is null)`,
     ),
     // The application decision is born with the capture and survives refunds and
-    // reversals; a state without a capture must not pretend to have one.
-    // Added by migration 0009, AFTER the backfill: it is false for every legacy
-    // CAPTURED row until application_state has been populated.
+    // reversals; a state without a capture must not pretend to have one. Added by
+    // migration 0009, AFTER the backfill: it is false for every legacy CAPTURED
+    // row until application_state has been populated.
     check(
       'payment_order_application_state_matches_capture',
       sql`(${table.providerCaptureId} is not null) = (${table.applicationState} is not null)`,
@@ -182,8 +182,9 @@ export const paymentOrder = pgTable(
      * was already applied" covers PENDING, APPROVED, REVERSED and
      * CAPTURED+UNAPPLIED exactly.
      *
-     * Created by migration 0010, after the legacy duplicates are reconciled: it
-     * must not fail on history, and resolving that history is a data decision.
+     * Created by migration 0010 behind a fail-closed preflight: real history can
+     * hold several blocking orders on one run, and that is resolved by asking the
+     * provider, never by inventing ABANDONED from a timer.
      */
     uniqueIndex('payment_order_one_blocking_per_run_uidx')
       .on(table.runId)
@@ -229,13 +230,13 @@ export const paymentRefund = pgTable(
       .notNull()
       .references(() => paymentOrder.id, { onDelete: 'restrict' }),
     /**
-     * Denormalised from the order so the per-run net ledger equation
-     * (credited = Σ applied captures − Σ completed reductions) and the loss
-     * report stay single-table queries. Immutable: an order's run never changes.
+     * The run is DERIVED through payment_order, never duplicated here. A
+     * denormalised copy would be a second source of truth for the same fact with
+     * no structural guarantee that the two agree, and the per-run net ledger
+     * equation (credited = Σ applied captures − Σ completed reductions) would
+     * silently break if any code path ever inserted a mismatching pair. The join
+     * is cheap and the consistency is free.
      */
-    runId: uuid('run_id')
-      .notNull()
-      .references(() => campaignRun.id, { onDelete: 'restrict' }),
     provider: text('provider').notNull().default('paypal'),
     providerRefundId: text('provider_refund_id'),
     state: paymentRefundState('state').notNull().default('REQUESTED'),
@@ -299,6 +300,5 @@ export const paymentRefund = pgTable(
       .on(table.paymentOrderId)
       .where(sql`${table.state} in ('REQUESTED', 'PENDING')`),
     index('payment_refund_order_idx').on(table.paymentOrderId),
-    index('payment_refund_run_idx').on(table.runId),
   ],
 );

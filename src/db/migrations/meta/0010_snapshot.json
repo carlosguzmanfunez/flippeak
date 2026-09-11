@@ -1,6 +1,6 @@
 {
-  "id": "548c6c97-bce1-4485-b25a-877178a07e1c",
-  "prevId": "5cd512cb-1337-4ce4-8eba-8cb3d209dcab",
+  "id": "62ab6ed0-3c9f-48f8-9ecc-b85b6bb71846",
+  "prevId": "b747414b-1638-48a7-9b8e-9f66160da67c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1204,12 +1204,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "run_id": {
-          "name": "run_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
         "provider": {
           "name": "provider",
           "type": "text",
@@ -1347,21 +1341,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "payment_refund_run_idx": {
-          "name": "payment_refund_run_idx",
-          "columns": [
-            {
-              "expression": "run_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -1371,19 +1350,6 @@
           "tableTo": "payment_order",
           "columnsFrom": [
             "payment_order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "payment_refund_run_id_campaign_run_id_fk": {
-          "name": "payment_refund_run_id_campaign_run_id_fk",
-          "tableFrom": "payment_refund",
-          "tableTo": "campaign_run",
-          "columnsFrom": [
-            "run_id"
           ],
           "columnsTo": [
             "id"

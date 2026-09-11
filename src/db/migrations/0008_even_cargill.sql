@@ -13,7 +13,6 @@ ALTER TYPE "public"."payment_order_state" ADD VALUE 'REVERSED';--> statement-bre
 CREATE TABLE "payment_refund" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"payment_order_id" uuid NOT NULL,
-	"run_id" uuid NOT NULL,
 	"provider" text DEFAULT 'paypal' NOT NULL,
 	"provider_refund_id" text,
 	"state" "payment_refund_state" DEFAULT 'REQUESTED' NOT NULL,
@@ -48,10 +47,8 @@ CREATE TABLE "payment_refund" (
 ALTER TABLE "payment_order" DROP CONSTRAINT "payment_order_capture_id_with_captured_state";--> statement-breakpoint
 ALTER TABLE "payment_order" ADD COLUMN "application_state" "payment_application_state";--> statement-breakpoint
 ALTER TABLE "payment_refund" ADD CONSTRAINT "payment_refund_payment_order_id_payment_order_id_fk" FOREIGN KEY ("payment_order_id") REFERENCES "public"."payment_order"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "payment_refund" ADD CONSTRAINT "payment_refund_run_id_campaign_run_id_fk" FOREIGN KEY ("run_id") REFERENCES "public"."campaign_run"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "payment_refund_provider_refund_uidx" ON "payment_refund" USING btree ("provider","provider_refund_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "payment_refund_one_open_per_order_uidx" ON "payment_refund" USING btree ("payment_order_id") WHERE "payment_refund"."state" in ('REQUESTED', 'PENDING');--> statement-breakpoint
 CREATE INDEX "payment_refund_order_idx" ON "payment_refund" USING btree ("payment_order_id");--> statement-breakpoint
-CREATE INDEX "payment_refund_run_idx" ON "payment_refund" USING btree ("run_id");--> statement-breakpoint
 ALTER TABLE "campaign_run" ADD CONSTRAINT "campaign_run_credited_within_exact_domain" CHECK ("campaign_run"."credited_cents" <= 2501999792);--> statement-breakpoint
 ALTER TABLE "payment_order" ADD CONSTRAINT "payment_order_capture_id_with_captured_state" CHECK (("payment_order"."state" in ('PENDING', 'APPROVED', 'ABANDONED')) = ("payment_order"."provider_capture_id" is null));
