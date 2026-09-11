@@ -23,6 +23,9 @@ export default tseslint.config(
   'qa-visual-5.mjs',
   'qa-hotfix-shots.mjs',
   'runtime-evidence.mjs',
+  // B2 migration-window verification script (standalone Node utility, like the
+  // harnesses above: Node globals and console are out of scope for this config).
+  'b2-migration-verify.mjs',
     ],
   },
   js.configs.recommended,

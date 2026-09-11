@@ -42,6 +42,11 @@ WITH candidates AS (
     JOIN "payment_event" e
       ON e."processing_state" = 'CAPTURED_UNAPPLIED'
      AND e."provider" = o."provider"
+     -- Financial evidence must be VERIFIED evidence: a row is only a candidate
+     -- because it is a signature-verified CAPTURE.COMPLETED delivery, never
+     -- merely because its verdict column says so.
+     AND e."signature_verified" = true
+     AND e."event_type" = 'PAYMENT.CAPTURE.COMPLETED'
      AND o."provider_order_id" IS NOT NULL
      AND o."provider_order_id" = e."payload"->'resource'->'supplementary_data'->'related_ids'->>'order_id'
      AND e."payload"->'resource'->>'id' IS NOT NULL
@@ -93,6 +98,10 @@ UPDATE "payment_event" e
  WHERE e."processing_state" = 'CAPTURED_UNAPPLIED'
    AND e."payment_id" IS NULL
    AND e."provider" = o."provider"
+   -- Same evidence gate as the resolution above: an unverified or differently
+   -- typed delivery is not a resolved capture and must not be linked as one.
+   AND e."signature_verified" = true
+   AND e."event_type" = 'PAYMENT.CAPTURE.COMPLETED'
    AND o."state" = 'CAPTURED'
    AND o."application_state" = 'UNAPPLIED'
    AND o."provider_capture_id" = e."payload"->'resource'->>'id'
