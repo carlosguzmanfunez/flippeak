@@ -24,8 +24,8 @@ const facts = (overrides: Partial<BlockingOrderFacts> = {}): BlockingOrderFacts 
 
 const queried = (status: ProviderOrderStatus) => ({ queried: true as const, status });
 
-describe('only provider evidence can release an order', () => {
-  it('releases when the provider reports the order voided', () => {
+describe('only provider evidence can make an order releasable', () => {
+  it('assesses a provider-voided order as releasable', () => {
     expect(assessBlockingOrder(facts({ evidence: queried('VOIDED') }))).toEqual({
       outcome: 'RELEASE',
       reason: 'PROVIDER_CONFIRMS_NOT_CAPTURABLE',
@@ -62,7 +62,7 @@ describe('only provider evidence can release an order', () => {
     });
   });
 
-  it('never releases an order with no provider order id, even when queried', () => {
+  it('never assesses an order with no provider order id as releasable, even when queried', () => {
     // A local order without a provider id is NOT provably uncapturable: the
     // create call may have succeeded and lost its response. Retiring it here
     // would reopen the slot on an order the buyer may still be able to pay.

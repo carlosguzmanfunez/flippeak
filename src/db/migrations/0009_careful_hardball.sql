@@ -37,8 +37,7 @@ UPDATE "payment_order" o
 --        arbitrarily.
 WITH candidates AS (
   SELECT o."id" AS order_id,
-         e."payload"->'resource'->>'id' AS capture_id,
-         count(DISTINCT e."payload"->'resource'->>'id') OVER (PARTITION BY o."id") AS distinct_captures
+         e."payload"->'resource'->>'id' AS capture_id
     FROM "payment_order" o
     JOIN "payment_event" e
       ON e."processing_state" = 'CAPTURED_UNAPPLIED'
@@ -58,24 +57,30 @@ WITH candidates AS (
    WHERE o."state" <> 'CAPTURED'
      AND o."provider_capture_id" IS NULL
 ),
-resolved AS (
-  -- One row per order, by construction: min() over a set that is known to hold a
-  -- single distinct capture id.
-  SELECT order_id, min(capture_id) AS capture_id
+candidate_counts AS (
+  -- Plain aggregation, NOT a window function: PostgreSQL rejects DISTINCT inside
+  -- window functions ("DISTINCT is not implemented for window functions"), so the
+  -- cardinality must come from a GROUP BY.
+  SELECT order_id,
+         count(DISTINCT capture_id) AS distinct_captures,
+         -- Deterministic: the WHERE below admits only groups with exactly one
+         -- distinct capture id, so every row of an admitted group carries the
+         -- same value and min() is that value.
+         min(capture_id) AS capture_id
     FROM candidates
-   WHERE distinct_captures = 1
    GROUP BY order_id
 )
 UPDATE "payment_order" o
    SET "state" = 'CAPTURED',
        "application_state" = 'UNAPPLIED',
-       "provider_capture_id" = r.capture_id
-  FROM resolved r
- WHERE o."id" = r.order_id
+       "provider_capture_id" = c.capture_id
+  FROM candidate_counts c
+ WHERE o."id" = c.order_id
+   AND c.distinct_captures = 1
    AND NOT EXISTS (
          SELECT 1 FROM "payment_order" o2
           WHERE o2."provider" = o."provider"
-            AND o2."provider_capture_id" = r.capture_id
+            AND o2."provider_capture_id" = c.capture_id
        );--> statement-breakpoint
 
 -- 3. Write-once link, restricted to what was ACTUALLY resolved above: the order

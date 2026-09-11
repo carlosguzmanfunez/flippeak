@@ -1,6 +1,6 @@
 import { and, eq, inArray, not, sql } from 'drizzle-orm';
 
-import { campaignRun, paymentOrder } from '@/db/schema';
+import { paymentOrder } from '@/db/schema';
 import { db } from '@/db/client';
 
 /**
@@ -16,7 +16,9 @@ import { db } from '@/db/client';
  * A timer that marks old orders ABANDONED would be inventing financial history,
  * and it would also reopen the checkout slot while the buyer can still pay the
  * order — the exact double-payment this index prevents. This module therefore
- * does no writing at all: it assesses, and it reports what a human must resolve.
+ * does no writing at all: it DECIDES and REPORTS, and nothing here releases an
+ * order. Performing the transition to ABANDONED belongs to the behaviour layer,
+ * which may only do it on the provider evidence assessed here.
  *
  * The blocking predicate is duplicated from the index on purpose — SQL and the
  * Drizzle schema cannot share one expression — and payment-schema.test.ts pins
@@ -160,13 +162,12 @@ export async function reportBlockedOrders(
     })
     .from(paymentOrder)
     .where(and(inArray(paymentOrder.runId, runIds), blockingWhere()))
-    .orderBy(campaignRun.createdAt);
+    // Ordered by columns of THIS table only: introducing a JOIN purely to sort
+    // would be an unnecessary dependency, and this pair is deterministic when two
+    // orders share a created_at.
+    .orderBy(paymentOrder.createdAt, paymentOrder.id);
 
-  const wantedRunIds = new Set(runIds);
-
-  return rows
-    .filter((row) => wantedRunIds.has(row.runId))
-    .map((row) => {
+  return rows.map((row) => {
       const status = row.providerOrderId === null ? undefined : providerStatus.get(row.providerOrderId);
       const evidence: ProviderEvidence =
         status === undefined ? { queried: false } : { queried: true, status };
